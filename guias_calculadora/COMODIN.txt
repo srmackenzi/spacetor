@@ -1,0 +1,1821 @@
+/*******************************************************************************************
+ CALCULADORA MOYA – GUI RAYLIB - EDICIÓN ESPACIAL ULTIMATE
+ VERSIÓN COMPLETA CON TODAS LAS MEJORAS VISUALES Y FUNCIONALES
+ SONIDOS ESPACIALES, ANIMACIONES, TEMAS, Y MUCHO MÁS
+********************************************************************************************/
+
+#include <raylib.h>
+#include <string>
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+
+using namespace std;
+
+// ======================================================
+// ESTRUCTURAS Y VARIABLES GLOBALES
+// ======================================================
+
+vector<string> historial;
+string userName = "";
+
+// Estructura para temas
+struct Tema {
+    Color fondo;
+    Color texto;
+    Color acento;
+    Color tarjeta;
+    Color verde;
+    Color naranja;
+    Color purpura;
+    Color rojo;
+};
+
+// Temas disponibles
+Tema temaOscuro = {{18, 18, 18, 255}, {240, 240, 240, 255}, {100, 150, 255, 255}, 
+                  {30, 30, 35, 255}, {100, 220, 100, 255}, {255, 160, 40, 255}, 
+                  {180, 80, 220, 255}, {255, 80, 80, 255}};
+
+Tema temaEspacial = {{10, 10, 30, 255}, {220, 240, 255, 255}, {80, 180, 255, 255},
+                    {25, 25, 45, 255}, {100, 255, 200, 255}, {255, 200, 50, 255},
+                    {200, 100, 255, 255}, {255, 100, 100, 255}};
+
+Tema temaNeon = {{5, 5, 15, 255}, {255, 255, 255, 255}, {0, 255, 255, 255},
+                {20, 20, 40, 255}, {0, 255, 150, 255}, {255, 100, 0, 255},
+                {200, 0, 255, 255}, {255, 0, 100, 255}};
+
+Tema* temaActual = &temaEspacial;
+
+// Variables de animación
+float animacionAlpha = 0.0f;
+bool animacionEntrando = true;
+double ultimoBorrado = 0;
+
+// Sonidos
+Sound clickSound;
+Sound beepSound;
+Sound successSound;
+Sound errorSound;
+
+// ======================================================
+// DECLARACIÓN DE FUNCIONES
+// ======================================================
+
+void pantallaInicial();
+void pantallaSumarRestar();
+void pantallaMultiplicar();
+void pantallaDividir();
+void pantallaDistanciaPlanetas();
+void pantallaFibonacci();
+void pantallaParImpar();
+void pantallaFactorial();
+void pantallaPotencia();
+void tecladoNumerico(string &buffer, int x, int y);
+bool botonSimple(Rectangle r, const char *text);
+void dibujarFondoAnimado();
+void dibujarTarjetaConSombra(Rectangle rect, Color color, float redondeo = 0.1f);
+void dibujarTextoConSombra(const char* texto, int x, int y, int fontSize, Color color);
+void dibujarIndicadorEstado(int x, int y, const char* texto, Color color);
+void mostrarResultadoBonito(int x, int y, const string& operacion, const string& resultado);
+void mostrarTooltip(const char* texto, int x, int y);
+void mostrarEfectoExito(int x, int y);
+void mostrarEfectoError(int x, int y);
+void cambiarTema();
+void reproducirSonido(Sound sonido);
+void inicializarRecursos();
+void liberarRecursos();
+bool esNumeroValido(const string& str);
+
+// ======================================================
+// OPCIONES MENÚ MEJORADAS
+// ======================================================
+
+const char *menuItems[] = {
+    "1) Sumar / Restar",
+    "2) Multiplicar", 
+    "3) Dividir",
+    "4) Distancia Planetas",
+    "5) Fibonacci",
+    "6) Par/Impar",
+    "7) Factorial",
+    "8) Potencia",
+    "9) Ver Historial",
+    "T) Cambiar Tema",
+    "0) Salir"
+};
+int menuCount = 11;
+
+// ======================================================
+// FUNCIÓN PRINCIPAL
+// ======================================================
+
+int main() {
+    InitWindow(900, 600, "🚀 Calculadora Moya SPACE EDITION");
+    SetTargetFPS(60);
+    
+    // Inicializar audio y recursos
+    InitAudioDevice();
+    inicializarRecursos();
+    
+    pantallaInicial();
+    
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        
+        dibujarFondoAnimado();
+        
+        // Título principal con efectos mejorados
+        string titulo = "BIENVENIDO " + userName;
+        dibujarTextoConSombra(titulo.c_str(), (900 - MeasureText(titulo.c_str(), 36)) / 2, 40, 36, temaActual->acento);
+        
+        string version = "🚀 CALCULATOR SPACE EDITION V3.0 🌌";
+        dibujarTextoConSombra(version.c_str(), (900 - MeasureText(version.c_str(), 20)) / 2, 90, 20, Fade(temaActual->acento, 0.8f));
+        
+        // Marco principal mejorado
+        Rectangle marco = {150, 120, 600, 450};
+        dibujarTarjetaConSombra(marco, temaActual->tarjeta, 0.15f);
+        
+        // Opciones del menú con efectos hover mejorados
+        int y = 150;
+        for(int i = 0; i < menuCount; i++) {
+            Rectangle opcionRect = {175, (float)(y-5), 550, 40};
+            bool overOpcion = CheckCollisionPointRec(GetMousePosition(), opcionRect);
+            
+            if(overOpcion) {
+                DrawRectangleRounded(opcionRect, 0.3f, 8, Fade(temaActual->verde, 0.15f));
+                DrawRectangleRoundedLinesEx(opcionRect, 0.3f, 8, 2, Fade(temaActual->verde, 0.6f));
+                
+                // Tooltip para opciones
+                if(IsKeyDown(KEY_LEFT_SHIFT)) {
+                    mostrarTooltip("Haz clic o presiona la tecla correspondiente", GetMouseX() + 10, GetMouseY() - 30);
+                }
+            }
+            
+            // Icono decorativo diferente para cada opción
+            const char* iconos[] = {"⊕", "⊗", "÷", "🪐", "∞", "⚡", "!", "↑", "📊", "🎨", "⏻"};
+            DrawText(iconos[i], 190, y, 24, overOpcion ? temaActual->verde : temaActual->acento);
+            
+            dibujarTextoConSombra(menuItems[i], 230, y, 24, overOpcion ? temaActual->verde : temaActual->texto);
+            y += 40;
+        }
+        
+        // Contador de historial
+        string historialInfo = "Operaciones en historial: " + to_string(historial.size());
+        dibujarTextoConSombra(historialInfo.c_str(), 300, 540, 18, Fade(temaActual->acento, 0.7f));
+        
+        // Navegación por teclado
+        if (IsKeyPressed(KEY_ONE)) pantallaSumarRestar();
+        if (IsKeyPressed(KEY_TWO)) pantallaMultiplicar();
+        if (IsKeyPressed(KEY_THREE)) pantallaDividir();
+        if (IsKeyPressed(KEY_FOUR)) pantallaDistanciaPlanetas();
+        if (IsKeyPressed(KEY_FIVE)) pantallaFibonacci();
+        if (IsKeyPressed(KEY_SIX)) pantallaParImpar();
+        if (IsKeyPressed(KEY_SEVEN)) pantallaFactorial();
+        if (IsKeyPressed(KEY_EIGHT)) pantallaPotencia();
+        if (IsKeyPressed(KEY_NINE)) {
+            while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+                BeginDrawing();
+                ClearBackground(temaActual->fondo);
+                dibujarFondoAnimado();
+                
+                dibujarTextoConSombra("📊 HISTORIAL DE OPERACIONES", 250, 40, 34, temaActual->acento);
+                
+                Rectangle historialRect = {50, 100, 800, 450};
+                dibujarTarjetaConSombra(historialRect, temaActual->tarjeta, 0.1f);
+                
+                int yy = 130;
+                for(const string& h : historial) {
+                    // Alternar colores para mejor legibilidad
+                    Color colorLinea = (yy % 50 == 0) ? temaActual->texto : Fade(temaActual->texto, 0.8f);
+                    DrawText(h.c_str(), 70, yy, 20, colorLinea);
+                    yy += 25;
+                }
+                
+                if(historial.empty()) {
+                    dibujarTextoConSombra("El historial está vacío", 350, 300, 26, Fade(temaActual->texto, 0.6f));
+                }
+                
+                dibujarTextoConSombra("BACKSPACE -> volver al menu", 320, 570, 20, Fade(temaActual->texto, 0.7f));
+                EndDrawing();
+            }
+        }
+        if (IsKeyPressed(KEY_T)) cambiarTema();
+        if (IsKeyPressed(KEY_ZERO)) break;
+        
+        // Navegación por mouse
+        for(int i = 0; i < menuCount; i++) {
+            Rectangle opcionRect = {175, (float)(150 + i*40 - 5), 550, 40};
+            if(CheckCollisionPointRec(GetMousePosition(), opcionRect) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                reproducirSonido(clickSound);
+                switch(i) {
+                    case 0: pantallaSumarRestar(); break;
+                    case 1: pantallaMultiplicar(); break;
+                    case 2: pantallaDividir(); break;
+                    case 3: pantallaDistanciaPlanetas(); break;
+                    case 4: pantallaFibonacci(); break;
+                    case 5: pantallaParImpar(); break;
+                    case 6: pantallaFactorial(); break;
+                    case 7: pantallaPotencia(); break;
+                    case 8: {
+                        while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+                            BeginDrawing();
+                            ClearBackground(temaActual->fondo);
+                            dibujarFondoAnimado();
+                            
+                            dibujarTextoConSombra("📊 HISTORIAL DE OPERACIONES", 250, 40, 34, temaActual->acento);
+                            
+                            Rectangle historialRect = {50, 100, 800, 450};
+                            dibujarTarjetaConSombra(historialRect, temaActual->tarjeta, 0.1f);
+                            
+                            int yy = 130;
+                            for(const string& h : historial) {
+                                Color colorLinea = (yy % 50 == 0) ? temaActual->texto : Fade(temaActual->texto, 0.8f);
+                                DrawText(h.c_str(), 70, yy, 20, colorLinea);
+                                yy += 25;
+                            }
+                            
+                            if(historial.empty()) {
+                                dibujarTextoConSombra("El historial está vacío", 350, 300, 26, Fade(temaActual->texto, 0.6f));
+                            }
+                            
+                            dibujarTextoConSombra("BACKSPACE -> volver al menu", 320, 570, 20, Fade(temaActual->texto, 0.7f));
+                            EndDrawing();
+                        }
+                    } break;
+                    case 9: cambiarTema(); break;
+                    case 10: break;
+                }
+            }
+        }
+        
+        EndDrawing();
+    }
+    
+    liberarRecursos();
+    CloseWindow();
+    return 0;
+}
+
+// ======================================================
+// INICIALIZACIÓN DE RECURSOS
+// ======================================================
+
+void inicializarRecursos() {
+    // Audio deshabilitado temporalmente para compatibilidad
+    // Los sonidos procedurales no están disponibles en esta versión de Raylib
+    // Generar sonidos proceduralmente
+    // Wave clickWave = GenWaveSquare(440, 0.1, 0.3);
+    // Wave beepWave = GenWaveSine(660, 0.05, 0.2);
+    // Wave successWave = GenWaveSine(880, 0.2, 0.4);
+    // Wave errorWave = GenWaveNoise(0.1, 0.3);
+
+    // clickSound = LoadSoundFromWave(clickWave);
+    // beepSound = LoadSoundFromWave(beepWave);
+    // successSound = LoadSoundFromWave(successWave);
+    // errorSound = LoadSoundFromWave(errorWave);
+
+    // UnloadWave(clickWave);
+    // UnloadWave(beepWave);
+    // UnloadWave(successWave);
+    // UnloadWave(errorWave);
+}
+
+void liberarRecursos() {
+    UnloadSound(clickSound);
+    UnloadSound(beepSound);
+    UnloadSound(successSound);
+    UnloadSound(errorSound);
+    CloseAudioDevice();
+}
+
+// ======================================================
+// PANTALLA INICIAL MEJORADA
+// ======================================================
+
+void pantallaInicial() {
+    string nombre = "";
+    bool activo = true;
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+    
+    while(activo && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        
+        // Fondo animado mejorado
+        dibujarFondoAnimado();
+        
+        // Aplicar animación de entrada
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.02f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        // Título con animación
+        int tituloAlpha = (int)(255 * animacionAlpha);
+        DrawText("🚀 CALCULADORA MOYA 🌌", 220, 80, 50, Fade(temaActual->acento, animacionAlpha));
+        
+        dibujarTextoConSombra("Por favor, ingresa tu nombre:", 260, 180, 28, Fade(temaActual->texto, animacionAlpha));
+        
+        // Campo de entrada mejorado
+        Rectangle campo = {150, 230, 600, 70};
+        dibujarTarjetaConSombra(campo, Fade(temaActual->tarjeta, animacionAlpha), 0.2f);
+        
+        // Efecto de focus
+        if(!nombre.empty()) {
+            DrawRectangleRoundedLinesEx(campo, 0.2f, 8, 3, Fade(temaActual->verde, animacionAlpha));
+        }
+        
+        DrawText(nombre.c_str(), 170, 250, 32, Fade(temaActual->texto, animacionAlpha));
+        
+        // Placeholder visual
+        if(nombre.empty()) {
+            DrawText("Escribe tu nombre aquí...", 170, 250, 32, Fade(temaActual->texto, 0.4f * animacionAlpha));
+        }
+        
+        // Botón continuar mejorado
+        Rectangle btnContinuar = {350, 330, 200, 70};
+        bool sobreBtn = CheckCollisionPointRec(GetMousePosition(), btnContinuar);
+        
+        if(sobreBtn) {
+            mostrarTooltip("Haz clic o presiona ENTER para continuar", GetMouseX() + 10, GetMouseY() - 30);
+        }
+        
+        if(botonSimple(btnContinuar, "CONTINUAR")) {
+            if(!nombre.empty()) {
+                userName = nombre;
+                activo = false;
+                reproducirSonido(successSound);
+            } else {
+                reproducirSonido(errorSound);
+                mostrarEfectoError(btnContinuar.x + btnContinuar.width/2, btnContinuar.y + btnContinuar.height/2);
+            }
+        }
+        
+        // Entrada de texto
+        int key = GetCharPressed();
+        while (key > 0) {
+            if ((key >= 32) && (key <= 125) && (nombre.size() < 20)) {
+                nombre += (char)key;
+                reproducirSonido(beepSound);
+            }
+            key = GetCharPressed();
+        }
+        
+        if (IsKeyPressed(KEY_BACKSPACE) && !nombre.empty()) {
+            nombre.pop_back();
+            reproducirSonido(clickSound);
+        }
+        
+        // Confirmación
+        if (IsKeyPressed(KEY_ENTER) && !nombre.empty()) {
+            userName = nombre;
+            activo = false;
+            reproducirSonido(successSound);
+        }
+        
+        dibujarTextoConSombra("Presiona ENTER o haz clic en CONTINUAR", 260, 420, 20, Fade(temaActual->texto, 0.7f * animacionAlpha));
+        
+        EndDrawing();
+    }
+}
+
+// ======================================================
+// FONDO ANIMADO MEJORADO CON ESTÉTICA ESPACIAL
+// ======================================================
+
+void dibujarFondoAnimado() {
+    float tiempo = GetTime();
+    
+    // Estrellas fijas de fondo
+    for(int i = 0; i < 100; i++) {
+        float x = (i * 37) % 900;
+        float y = (i * 23) % 600;
+        float brillo = 0.3f + sin(tiempo * 0.5 + i) * 0.2f;
+        DrawPixel(x, y, Fade(temaActual->texto, brillo * 0.3f));
+    }
+    
+    // Capa 1: Planetas y estrellas grandes
+    for(int i = 0; i < 15; i++) {
+        float x = 100 + (i * 60) + sin(tiempo * 0.3 + i * 0.7) * 50;
+        float y = 80 + cos(tiempo * 0.4 + i * 0.5) * 40;
+        float radio = 3 + sin(tiempo * 0.2 + i) * 1.5;
+        
+        Color particulaColor;
+        switch(i % 5) {
+            case 0: particulaColor = Fade(temaActual->acento, 0.15f); break;
+            case 1: particulaColor = Fade(temaActual->verde, 0.12f); break;
+            case 2: particulaColor = Fade(temaActual->purpura, 0.1f); break;
+            case 3: particulaColor = Fade(temaActual->naranja, 0.08f); break;
+            default: particulaColor = Fade(WHITE, 0.1f); break;
+        }
+        DrawCircle(x, y, radio, particulaColor);
+        
+        // Anillos para algunos
+        if(i % 3 == 0) {
+            DrawRing({x, y}, radio + 2, radio + 4, 0, 360, 3, Fade(particulaColor, 0.3f));
+        }
+    }
+    
+    // Capa 2: Nebulosas grandes
+    for(int i = 0; i < 6; i++) {
+        float x = 200 + (i * 150) + cos(tiempo * 0.2 + i) * 80;
+        float y = 400 + sin(tiempo * 0.3 + i * 0.8) * 60;
+        float radio = 25 + sin(tiempo * 0.1 + i) * 8;
+        
+        switch(i % 3) {
+            case 0: DrawCircleGradient(x, y, radio, Fade(temaActual->acento, 0.04f), Fade(temaActual->purpura, 0.01f)); break;
+            case 1: DrawCircleGradient(x, y, radio, Fade(temaActual->verde, 0.03f), Fade(temaActual->acento, 0.01f)); break;
+            default: DrawCircleGradient(x, y, radio, Fade(temaActual->naranja, 0.02f), Fade(temaActual->rojo, 0.005f)); break;
+        }
+    }
+    
+    // Capa 3: Líneas de conexión (constelaciones)
+    for(int i = 0; i < 10; i += 2) {
+        float x1 = 50 + (i * 90) + sin(tiempo * 0.5 + i) * 30;
+        float y1 = 100 + cos(tiempo * 0.4 + i) * 35;
+        float x2 = 50 + ((i+1) * 90) + sin(tiempo * 0.5 + (i+1)) * 30;
+        float y2 = 100 + cos(tiempo * 0.4 + (i+1)) * 35;
+        DrawLineEx({x1, y1}, {x2, y2}, 1.0f, Fade(temaActual->acento, 0.08f));
+    }
+
+    // Capa 4: Formas matemáticas animadas mejoradas
+    // Rectángulos flotantes representando matrices o bloques matemáticos
+    for(int i = 0; i < 10; i++) {
+        float x = 150 + (i * 80) + sin(tiempo * 0.4 + i * 0.7) * 70;
+        float y = 180 + cos(tiempo * 0.5 + i * 0.8) * 60;
+        float width = 18 + sin(tiempo * 0.3 + i) * 8;
+        float height = 24 + cos(tiempo * 0.35 + i) * 10;
+        float rotation = tiempo * 0.6 + i * 36.0f; // Rotación más dinámica
+
+        Rectangle rect = {x, y, width, height};
+        Color rectColor;
+        float alpha = 0.08f + sin(tiempo * 0.8 + i) * 0.03f; // Alpha pulsante
+        switch(i % 5) {
+            case 0: rectColor = Fade(temaActual->verde, alpha); break;
+            case 1: rectColor = Fade(temaActual->purpura, alpha); break;
+            case 2: rectColor = Fade(temaActual->naranja, alpha); break;
+            case 3: rectColor = Fade(temaActual->acento, alpha); break;
+            default: rectColor = Fade(temaActual->rojo, alpha); break;
+        }
+        DrawRectanglePro(rect, {width/2, height/2}, rotation, rectColor);
+
+        // Efecto de brillo en bordes
+
+        float cosRot = cos(rotation * DEG2RAD);
+
+        float sinRot = sin(rotation * DEG2RAD);
+
+        Vector2 tl = {x - width/2 * cosRot - height/2 * sinRot, y - width/2 * sinRot + height/2 * cosRot};
+
+        Vector2 tr = {x + width/2 * cosRot - height/2 * sinRot, y + width/2 * sinRot + height/2 * cosRot};
+
+        Vector2 br = {x + width/2 * cosRot + height/2 * sinRot, y + width/2 * sinRot - height/2 * cosRot};
+
+        Vector2 bl = {x - width/2 * cosRot + height/2 * sinRot, y - width/2 * sinRot - height/2 * cosRot};
+
+        DrawLineEx(tl, tr, 1.0f, Fade(WHITE, 0.1f + sin(tiempo * 1.2 + i) * 0.05f));
+
+        DrawLineEx(tr, br, 1.0f, Fade(WHITE, 0.1f + sin(tiempo * 1.2 + i) * 0.05f));
+
+        DrawLineEx(br, bl, 1.0f, Fade(WHITE, 0.1f + sin(tiempo * 1.2 + i) * 0.05f));
+
+        DrawLineEx(bl, tl, 1.0f, Fade(WHITE, 0.1f + sin(tiempo * 1.2 + i) * 0.05f));
+    }
+
+    // Triángulos escalando y rotando representando geometría
+    for(int i = 0; i < 8; i++) {
+        float centerX = 250 + (i * 100) + cos(tiempo * 0.25 + i) * 80;
+        float centerY = 320 + sin(tiempo * 0.4 + i * 0.9) * 70;
+        float size = 15 + sin(tiempo * 0.5 + i) * 8;
+        float rotation = tiempo * 0.4 + i * 45.0f;
+
+        // Calcular vértices del triángulo equilátero
+        float angle1 = rotation * DEG2RAD;
+        float angle2 = (rotation + 120) * DEG2RAD;
+        float angle3 = (rotation + 240) * DEG2RAD;
+
+        Vector2 v1 = {(float)(centerX + cos(angle1) * size), (float)(centerY + sin(angle1) * size)};
+        Vector2 v2 = {(float)(centerX + cos(angle2) * size), (float)(centerY + sin(angle2) * size)};
+        Vector2 v3 = {(float)(centerX + cos(angle3) * size), (float)(centerY + sin(angle3) * size)};
+
+        Color triangleColor;
+        float alpha = 0.08f + cos(tiempo * 0.7 + i) * 0.04f;
+        switch(i % 4) {
+            case 0: triangleColor = Fade(temaActual->verde, alpha); break;
+            case 1: triangleColor = Fade(temaActual->purpura, alpha); break;
+            case 2: triangleColor = Fade(temaActual->naranja, alpha); break;
+            default: triangleColor = Fade(temaActual->acento, alpha); break;
+        }
+        DrawTriangle(v1, v2, v3, triangleColor);
+
+        // Líneas de contorno con efecto de brillo
+        DrawLineEx(v1, v2, 1.5f, Fade(triangleColor, 0.4f + sin(tiempo * 1.5 + i) * 0.2f));
+        DrawLineEx(v2, v3, 1.5f, Fade(triangleColor, 0.4f + sin(tiempo * 1.5 + i + 120) * 0.2f));
+        DrawLineEx(v3, v1, 1.5f, Fade(triangleColor, 0.4f + sin(tiempo * 1.5 + i + 240) * 0.2f));
+    }
+
+    // Nuevos: Círculos representando constantes matemáticas (π, e, etc.)
+    for(int i = 0; i < 6; i++) {
+        float centerX = 400 + (i * 90) + sin(tiempo * 0.3 + i * 1.1) * 60;
+        float centerY = 250 + cos(tiempo * 0.4 + i * 0.8) * 50;
+        float radius = 12 + sin(tiempo * 0.6 + i) * 6;
+
+        Color circleColor;
+        float alpha = 0.06f + cos(tiempo * 0.9 + i) * 0.03f;
+        switch(i % 4) {
+            case 0: circleColor = Fade(temaActual->verde, alpha); break;
+            case 1: circleColor = Fade(temaActual->purpura, alpha); break;
+            case 2: circleColor = Fade(temaActual->naranja, alpha); break;
+            default: circleColor = Fade(temaActual->acento, alpha); break;
+        }
+
+        DrawCircle(centerX, centerY, radius, circleColor);
+        DrawRing({centerX, centerY}, radius * 0.7f, radius, 0, 360, 2,
+                Fade(circleColor, 0.3f + sin(tiempo * 1.2 + i) * 0.2f));
+
+        // Efecto de rotación interna
+        float innerAngle = tiempo * 0.8 + i * 60;
+        float innerRadius = radius * 0.5f;
+        Vector2 innerPoint = {centerX + cos(innerAngle * DEG2RAD) * innerRadius,
+                             centerY + sin(innerAngle * DEG2RAD) * innerRadius};
+        DrawCircle(innerPoint.x, innerPoint.y, 3, Fade(circleColor, 0.8f));
+    }
+
+    // Hexágonos representando geometría hexagonal
+    for(int i = 0; i < 5; i++) {
+        float centerX = 100 + (i * 140) + cos(tiempo * 0.2 + i) * 80;
+        float centerY = 400 + sin(tiempo * 0.35 + i * 1.2) * 60;
+        float size = 14 + sin(tiempo * 0.4 + i) * 5;
+
+        Color hexColor;
+        float alpha = 0.05f + sin(tiempo * 0.7 + i) * 0.03f;
+        switch(i % 3) {
+            case 0: hexColor = Fade(temaActual->verde, alpha); break;
+            case 1: hexColor = Fade(temaActual->purpura, alpha); break;
+            default: hexColor = Fade(temaActual->naranja, alpha); break;
+        }
+
+        // Dibujar hexágono
+        for(int j = 0; j < 6; j++) {
+            float angle1 = (j * 60.0f + tiempo * 0.3 + i * 30) * DEG2RAD;
+            float angle2 = ((j + 1) * 60.0f + tiempo * 0.3 + i * 30) * DEG2RAD;
+            Vector2 p1 = {centerX + cos(angle1) * size, centerY + sin(angle1) * size};
+            Vector2 p2 = {centerX + cos(angle2) * size, centerY + sin(angle2) * size};
+            DrawLineEx(p1, p2, 1.5f, Fade(hexColor, 0.6f + sin(tiempo * 1.0 + i + j) * 0.3f));
+        }
+
+        // Centro del hexágono con efecto pulsante
+        DrawCircle(centerX, centerY, 4, Fade(hexColor, 0.8f + cos(tiempo * 1.5 + i) * 0.4f));
+    }
+
+    // Símbolos matemáticos sutiles como elementos decorativos
+    float symbolAlpha = 0.03f + sin(tiempo * 0.5) * 0.02f;
+    Color symbolColor = Fade(temaActual->texto, symbolAlpha);
+
+    // Símbolos π distribuidos
+    DrawText("π", 50, 100, 16, symbolColor);
+    DrawText("π", 750, 450, 14, Fade(symbolColor, 0.7f));
+    DrawText("π", 400, 50, 12, Fade(symbolColor, 0.5f));
+
+    // Símbolos de infinito
+    DrawText("∞", 200, 500, 18, symbolColor);
+    DrawText("∞", 650, 150, 16, Fade(symbolColor, 0.6f));
+
+    // Símbolos de raíz cuadrada
+    DrawText("√", 100, 300, 20, Fade(symbolColor, 0.8f));
+    DrawText("√", 700, 350, 18, Fade(symbolColor, 0.5f));
+
+    // Partículas matemáticas flotantes (representando números primos o constantes)
+    for(int i = 0; i < 12; i++) {
+        float x = 50 + (i * 70) + sin(tiempo * 0.15 + i * 0.3) * 40;
+        float y = 450 + cos(tiempo * 0.2 + i * 0.4) * 30;
+        float size = 2 + sin(tiempo * 0.8 + i) * 1;
+
+        Color particleColor;
+        switch(i % 4) {
+            case 0: particleColor = Fade(temaActual->verde, 0.1f); break;
+            case 1: particleColor = Fade(temaActual->purpura, 0.08f); break;
+            case 2: particleColor = Fade(temaActual->naranja, 0.06f); break;
+            default: particleColor = Fade(temaActual->acento, 0.09f); break;
+        }
+
+        DrawCircle(x, y, size, particleColor);
+
+        // Trayectoria sutil
+        if(i % 3 == 0) {
+            for(int j = 1; j <= 3; j++) {
+                float trailX = x - sin(tiempo * 0.15 + i * 0.3) * j * 8;
+                float trailY = y - cos(tiempo * 0.2 + i * 0.4) * j * 6;
+                DrawCircle(trailX, trailY, size * (1.0f - j * 0.2f), Fade(particleColor, 0.3f - j * 0.1f));
+            }
+        }
+    }
+
+    DrawCircle(80, 80, 60, Fade(temaActual->acento, 0.05f));
+    DrawCircle(820, 520, 80, Fade(temaActual->verde, 0.04f));
+    DrawCircle(750, 120, 55, Fade(temaActual->purpura, 0.06f));
+    
+    // Cometas ocasionales
+    if((int)(tiempo * 0.3) % 20 == 0) {
+        float cometX = 900 - fmod(tiempo * 100, 1200);
+        float cometY = 100 + sin(tiempo) * 50;
+        DrawCircle(cometX, cometY, 4, YELLOW);
+        DrawLine(cometX, cometY, cometX - 20, cometY - 5, Fade(YELLOW, 0.5f));
+    }
+}
+
+// ======================================================
+// BOTÓN SIMPLE MEJORADO
+// ======================================================
+
+bool botonSimple(Rectangle r, const char *text) {
+    bool over = CheckCollisionPointRec(GetMousePosition(), r);
+    Color colorBoton = over ? temaActual->verde : temaActual->acento;
+    
+    // Efecto de elevación
+    float elevacion = over ? 2.0f : 0.0f;
+    
+    // Sombra
+    Rectangle btnShadow = {r.x, r.y + 3, r.width, r.height};
+    if(over) {
+        DrawRectangleRounded(btnShadow, 0.3f, 12, Fade(BLACK, 0.2f));
+    }
+    
+    // Botón principal
+    DrawRectangleRounded({r.x, r.y - elevacion, r.width, r.height}, 0.3f, 12, colorBoton);
+    
+    // Borde con efecto de brillo
+    DrawRectangleRoundedLinesEx({r.x, r.y - elevacion, r.width, r.height}, 0.3f, 12, 2, 
+                               over ? WHITE : Fade(WHITE, 0.7f));
+    
+    // Texto con efecto de sombra
+    int textWidth = MeasureText(text, 26);
+    dibujarTextoConSombra(text, r.x + (r.width - textWidth)/2, r.y - elevacion + 17, 26, WHITE);
+    
+    return (over && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+}
+
+// ======================================================
+// TARJETA CON SOMBRA
+// ======================================================
+
+void dibujarTarjetaConSombra(Rectangle rect, Color color, float redondeo) {
+    // Sombra
+    Rectangle shadowRect = {rect.x + 4, rect.y + 4, rect.width, rect.height};
+    DrawRectangleRounded(shadowRect, redondeo, 12, Fade(BLACK, 0.15f));
+    
+    // Tarjeta principal
+    DrawRectangleRounded(rect, redondeo, 12, color);
+    DrawRectangleRoundedLinesEx(rect, redondeo, 12, 2, Fade(WHITE, 0.1f));
+}
+
+// ======================================================
+// TEXTO CON SOMBRA
+// ======================================================
+
+void dibujarTextoConSombra(const char* texto, int x, int y, int fontSize, Color color) {
+    DrawText(texto, x + 1, y + 1, fontSize, Fade(BLACK, 0.3f));
+    DrawText(texto, x, y, fontSize, color);
+}
+
+// ======================================================
+// NUEVAS FUNCIONES AUXILIARES
+// ======================================================
+
+void dibujarIndicadorEstado(int x, int y, const char* texto, Color color) {
+    // Círculo indicador pulsante
+    float pulso = 0.7f + sin(GetTime() * 5) * 0.3f;
+    DrawCircle(x, y, 6, Fade(color, pulso));
+    DrawText(TextFormat("%s", texto), x + 15, y - 8, 18, color);
+}
+
+void mostrarResultadoBonito(int x, int y, const string& operacion, const string& resultado) {
+    Rectangle resultadoRect = {(float)x-20, (float)y-15, 450, 80};
+    dibujarTarjetaConSombra(resultadoRect, Fade(temaActual->verde, 0.1f), 0.1f);
+    
+    // Operación
+    dibujarTextoConSombra(operacion.c_str(), x, y, 22, temaActual->texto);
+    
+    // Signo igual
+    int opWidth = MeasureText(operacion.c_str(), 22);
+    dibujarTextoConSombra("=", x + opWidth + 10, y, 24, temaActual->acento);
+    
+    // Resultado
+    dibujarTextoConSombra(resultado.c_str(), x + opWidth + 35, y, 26, temaActual->verde);
+    
+    // Efecto de éxito
+    mostrarEfectoExito(x + opWidth + 35 + MeasureText(resultado.c_str(), 26)/2, y + 10);
+}
+
+void mostrarTooltip(const char* texto, int x, int y) {
+    int padding = 10;
+    int textWidth = MeasureText(texto, 18);
+    Rectangle tooltipRect = {x, y, (float)(textWidth + padding * 2), 30};
+    
+    dibujarTarjetaConSombra(tooltipRect, Fade(BLACK, 0.85f), 0.1f);
+    DrawText(texto, x + padding, y + 5, 18, WHITE);
+}
+
+void mostrarEfectoExito(int x, int y) {
+    float tiempo = GetTime();
+    for(int i = 0; i < 8; i++) {
+        float angle = tiempo * 2 + i * (360/8) * DEG2RAD;
+        float dist = 10 + sin(tiempo * 8 + i) * 5;
+        float px = x + cos(angle) * dist;
+        float py = y + sin(angle) * dist;
+        float radio = 2 + sin(tiempo * 10 + i) * 1;
+        DrawCircle(px, py, radio, Fade(temaActual->verde, 0.7f));
+    }
+}
+
+void mostrarEfectoError(int x, int y) {
+    float tiempo = GetTime();
+    for(int i = 0; i < 6; i++) {
+        float angle = i * (360/6) * DEG2RAD;
+        float dist = 8 + sin(tiempo * 15) * 3;
+        float px = x + cos(angle) * dist;
+        float py = y + sin(angle) * dist;
+        DrawCircle(px, py, 3, Fade(temaActual->rojo, 0.8f));
+    }
+}
+
+void cambiarTema() {
+    reproducirSonido(clickSound);
+    if(temaActual == &temaEspacial) {
+        temaActual = &temaOscuro;
+    } else if(temaActual == &temaOscuro) {
+        temaActual = &temaNeon;
+    } else {
+        temaActual = &temaEspacial;
+    }
+}
+
+void reproducirSonido(Sound sonido) {
+    if(IsAudioDeviceReady()) {
+        PlaySound(sonido);
+    }
+}
+
+bool esNumeroValido(const string& str) {
+    if(str.empty()) return false;
+    if(str == "-" || str == "." || str == "-.") return false;
+    if(str.find("--") != string::npos) return false;
+    if(count(str.begin(), str.end(), '.') > 1) return false;
+    return true;
+}
+
+// ======================================================
+// TECLADO NUMÉRICO SUPER MEJORADO
+// ======================================================
+
+void tecladoNumerico(string &buffer, int x, int y) {
+    const char *nums[9] = {"1","2","3","4","5","6","7","8","9"};
+    int idx = 0;
+    
+    for(int j=0;j<3;j++) {
+        for(int i=0;i<3;i++) {
+            Rectangle r = { (float)(x + i*85), (float)(y + j*75), 75,65 };
+            bool over = CheckCollisionPointRec(GetMousePosition(), r);
+            Color colorBoton = over ? Fade(temaActual->verde,0.9f) : Fade(temaActual->acento,0.7f);
+            
+            // Sombra del botón
+            if(over) {
+                DrawRectangleRounded({r.x, r.y+3, r.width, r.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+                mostrarTooltip("Número", r.x, r.y - 25);
+            }
+            
+            // Botón principal
+            float elevacion = over ? 2.0f : 0.0f;
+            DrawRectangleRounded({r.x, r.y - elevacion, r.width, r.height}, 0.3f, 8, colorBoton);
+            DrawRectangleRoundedLinesEx({r.x, r.y - elevacion, r.width, r.height}, 0.3f, 8, 2, 
+                                       over ? WHITE : Fade(WHITE, 0.6f));
+            
+            // Texto del número con icono espacial
+            const char* iconos[] = {"❶", "❷", "❸", "❹", "❺", "❻", "❼", "❽", "❾"};
+            dibujarTextoConSombra(iconos[idx], r.x+25, r.y - elevacion + 15, 28, WHITE);
+            dibujarTextoConSombra(nums[idx], r.x+35, r.y - elevacion + 35, 18, WHITE);
+            
+            if(over && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                buffer += nums[idx];
+                reproducirSonido(beepSound);
+            }
+            idx++;
+        }
+    }
+    
+    // Fila 4: Cero, punto, negativo, borrar
+    // Cero
+    Rectangle r0 = { (float)x+85, (float)(y+3*75), 75,65 };
+    bool over0 = CheckCollisionPointRec(GetMousePosition(), r0);
+    Color colorBoton0 = over0 ? Fade(temaActual->verde,0.9f) : Fade(temaActual->acento,0.7f);
+    
+    if(over0) {
+        DrawRectangleRounded({r0.x, r0.y+3, r0.width, r0.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+        mostrarTooltip("Cero", r0.x, r0.y - 25);
+    }
+    
+    float elevacion0 = over0 ? 2.0f : 0.0f;
+    DrawRectangleRounded({r0.x, r0.y - elevacion0, r0.width, r0.height}, 0.3f, 8, colorBoton0);
+    DrawRectangleRoundedLinesEx({r0.x, r0.y - elevacion0, r0.width, r0.height}, 0.3f, 8, 2, 
+                               over0 ? WHITE : Fade(WHITE, 0.6f));
+    dibujarTextoConSombra("🄌", r0.x+25, r0.y - elevacion0 + 15, 28, WHITE);
+    dibujarTextoConSombra("0", r0.x+35, r0.y - elevacion0 + 35, 18, WHITE);
+    
+    if(over0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        buffer += "0";
+        reproducirSonido(beepSound);
+    }
+    
+    // Punto decimal
+    Rectangle rDot = { (float)x+170, (float)(y+3*75), 75,65 };
+    bool overDot = CheckCollisionPointRec(GetMousePosition(), rDot);
+    Color colorBotonDot = overDot ? Fade(temaActual->naranja,0.9f) : Fade(temaActual->naranja,0.7f);
+    
+    if(overDot) {
+        DrawRectangleRounded({rDot.x, rDot.y+3, rDot.width, rDot.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+        mostrarTooltip("Punto decimal", rDot.x, rDot.y - 25);
+    }
+    
+    float elevacionDot = overDot ? 2.0f : 0.0f;
+    DrawRectangleRounded({rDot.x, rDot.y - elevacionDot, rDot.width, rDot.height}, 0.3f, 8, colorBotonDot);
+    DrawRectangleRoundedLinesEx({rDot.x, rDot.y - elevacionDot, rDot.width, rDot.height}, 0.3f, 8, 2, 
+                               overDot ? WHITE : Fade(WHITE, 0.6f));
+    dibujarTextoConSombra("●", rDot.x+28, rDot.y - elevacionDot + 18, 28, WHITE);
+    
+    if(overDot && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && buffer.find('.') == string::npos) {
+        buffer += ".";
+        reproducirSonido(beepSound);
+    }
+    
+    // Signo negativo
+    Rectangle rNeg = { (float)x, (float)(y+3*75), 75,65 };
+    bool overNeg = CheckCollisionPointRec(GetMousePosition(), rNeg);
+    Color colorBotonNeg = overNeg ? Fade(temaActual->purpura,0.9f) : Fade(temaActual->purpura,0.7f);
+    
+    if(overNeg) {
+        DrawRectangleRounded({rNeg.x, rNeg.y+3, rNeg.width, rNeg.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+        mostrarTooltip("Signo negativo", rNeg.x, rNeg.y - 25);
+    }
+    
+    float elevacionNeg = overNeg ? 2.0f : 0.0f;
+    DrawRectangleRounded({rNeg.x, rNeg.y - elevacionNeg, rNeg.width, rNeg.height}, 0.3f, 8, colorBotonNeg);
+    DrawRectangleRoundedLinesEx({rNeg.x, rNeg.y - elevacionNeg, rNeg.width, rNeg.height}, 0.3f, 8, 2, 
+                               overNeg ? WHITE : Fade(WHITE, 0.6f));
+    dibujarTextoConSombra("±", rNeg.x+28, rNeg.y - elevacionNeg + 18, 28, WHITE);
+    
+    if(overNeg && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if(buffer.empty() || (buffer.length() > 0 && buffer[0] != '-')) {
+            buffer = "-" + buffer;
+            reproducirSonido(beepSound);
+        }
+    }
+    
+    // Fila 5: Borrar, borrar todo, enter
+    // Borrar (backspace)
+    Rectangle rb = { (float)x, (float)(y+4*75), 75,65 };
+    bool overB = CheckCollisionPointRec(GetMousePosition(), rb);
+    Color colorBotonB = overB ? Fade(temaActual->rojo,0.9f) : Fade(temaActual->rojo,0.7f);
+    
+    if(overB) {
+        DrawRectangleRounded({rb.x, rb.y+3, rb.width, rb.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+        mostrarTooltip("Borrar último carácter", rb.x, rb.y - 25);
+    }
+    
+    float elevacionB = overB ? 2.0f : 0.0f;
+    DrawRectangleRounded({rb.x, rb.y - elevacionB, rb.width, rb.height}, 0.3f, 8, colorBotonB);
+    DrawRectangleRoundedLinesEx({rb.x, rb.y - elevacionB, rb.width, rb.height}, 0.3f, 8, 2, 
+                               overB ? WHITE : Fade(WHITE, 0.6f));
+    dibujarTextoConSombra("←", rb.x+28, rb.y - elevacionB + 18, 28, WHITE);
+    
+    if(overB && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !buffer.empty()) {
+        buffer.pop_back();
+        reproducirSonido(clickSound);
+    }
+    
+    // Borrar todo (clear)
+    Rectangle rClear = { (float)x+85, (float)(y+4*75), 75,65 };
+    bool overClear = CheckCollisionPointRec(GetMousePosition(), rClear);
+    Color colorBotonClear = overClear ? Fade(temaActual->rojo,0.9f) : Fade(temaActual->rojo,0.7f);
+    
+    if(overClear) {
+        DrawRectangleRounded({rClear.x, rClear.y+3, rClear.width, rClear.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+        mostrarTooltip("Borrar todo", rClear.x, rClear.y - 25);
+    }
+    
+    float elevacionClear = overClear ? 2.0f : 0.0f;
+    DrawRectangleRounded({rClear.x, rClear.y - elevacionClear, rClear.width, rClear.height}, 0.3f, 8, colorBotonClear);
+    DrawRectangleRoundedLinesEx({rClear.x, rClear.y - elevacionClear, rClear.width, rClear.height}, 0.3f, 8, 2, 
+                               overClear ? WHITE : Fade(WHITE, 0.6f));
+    dibujarTextoConSombra("C", rClear.x+28, rClear.y - elevacionClear + 18, 28, WHITE);
+    
+    if(overClear && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        buffer.clear();
+        reproducirSonido(clickSound);
+    }
+    
+    // Enter
+    Rectangle rEnter = { (float)x+170, (float)(y+4*75), 75,65 };
+    bool overEnter = CheckCollisionPointRec(GetMousePosition(), rEnter);
+    Color colorBotonEnter = overEnter ? Fade(temaActual->verde,0.9f) : Fade(temaActual->verde,0.7f);
+    
+    if(overEnter) {
+        DrawRectangleRounded({rEnter.x, rEnter.y+3, rEnter.width, rEnter.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+        mostrarTooltip("Confirmar entrada", rEnter.x, rEnter.y - 25);
+    }
+    
+    float elevacionEnter = overEnter ? 2.0f : 0.0f;
+    DrawRectangleRounded({rEnter.x, rEnter.y - elevacionEnter, rEnter.width, rEnter.height}, 0.3f, 8, colorBotonEnter);
+    DrawRectangleRoundedLinesEx({rEnter.x, rEnter.y - elevacionEnter, rEnter.width, rEnter.height}, 0.3f, 8, 2, 
+                               overEnter ? WHITE : Fade(WHITE, 0.6f));
+    dibujarTextoConSombra("↵", rEnter.x+28, rEnter.y - elevacionEnter + 18, 28, WHITE);
+}
+
+// ======================================================
+// FUNCIONES DE OPERACIONES COMPLETAS
+// ======================================================
+
+void pantallaSumarRestar() {
+    string op = "";
+    string num1 = "", num2 = "";
+    bool choose = true, input1=false, input2=false, done=false;
+    string resultado = "";
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+    
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        dibujarFondoAnimado();
+        
+        // Aplicar animación
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.05f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        dibujarTextoConSombra("⊕ SUMAR / RESTAR ⊖", 280, 40, 34, Fade(temaActual->acento, animacionAlpha));
+        
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, Fade(temaActual->tarjeta, animacionAlpha), 0.1f);
+        
+        if(choose) {
+            dibujarTextoConSombra("Elige operación:", 350, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            Rectangle addR = {300,220,140,70};
+            Rectangle resR = {460,220,140,70};
+            
+            if (botonSimple(addR, "SUMA (+)")) {
+                op = "+";
+                choose=false;
+                input1=true;
+                reproducirSonido(clickSound);
+            }
+            if (botonSimple(resR, "RESTA (-)")) {
+                op = "-";
+                choose=false;
+                input1=true;
+                reproducirSonido(clickSound);
+            }
+        } else if(input1) {
+            dibujarIndicadorEstado(180, 160, "Ingresando primer número", temaActual->verde);
+            dibujarTextoConSombra("Primer número:", 350, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            // Mostrar operación parcial
+            if(!num1.empty()) {
+                string operacionParcial = num1 + " " + op + " ?";
+                dibujarTextoConSombra(operacionParcial.c_str(), 350, 120, 20, Fade(temaActual->texto, 0.6f));
+            }
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num1.c_str(), 220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num1, 250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num1)) {
+                input1=false;
+                input2=true;
+                reproducirSonido(successSound);
+            }
+        } else if(input2) {
+            dibujarIndicadorEstado(180, 160, "Ingresando segundo número", temaActual->naranja);
+            dibujarTextoConSombra("Segundo número:", 350, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            // Mostrar operación parcial
+            string operacionParcial = num1 + " " + op + " ?";
+            dibujarTextoConSombra(operacionParcial.c_str(), 350, 120, 20, Fade(temaActual->texto, 0.6f));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num2.c_str(), 220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num2, 250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num2)) {
+                float a = stof(num1);
+                float b = stof(num2);
+                float r = (op == "+") ? a+b : a-b;
+                char buf[64];
+                sprintf(buf,"%.4f",r);
+                resultado = buf;
+                string h = num1 + " " + op + " " + num2 + " = " + buf;
+                historial.push_back(h);
+                input2 = false;
+                done = true;
+                reproducirSonido(successSound);
+            }
+        } else if(done) {
+            string operacionCompleta = num1 + " " + op + " " + num2;
+            mostrarResultadoBonito(250, 220, operacionCompleta, resultado);
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, Fade(temaActual->acento, animacionAlpha));
+            if(IsKeyPressed(KEY_ENTER)) {
+                reproducirSonido(clickSound);
+                return;
+            }
+        }
+        
+        dibujarTextoConSombra("BACKSPACE -> volver", 20, 20, 18, Fade(temaActual->texto, 0.7f));
+        EndDrawing();
+    }
+}
+
+void pantallaMultiplicar() {
+    string num1="", num2="";
+    bool input1=true, input2=false, done=false;
+    string resultado = "";
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+    
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        dibujarFondoAnimado();
+        
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.05f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        dibujarTextoConSombra("⊗ MULTIPLICAR", 320, 40, 34, Fade(temaActual->acento, animacionAlpha));
+        
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, Fade(temaActual->tarjeta, animacionAlpha), 0.1f);
+        
+        if(input1) {
+            dibujarIndicadorEstado(180, 160, "Ingresando primer número", temaActual->verde);
+            dibujarTextoConSombra("Primer número:", 350, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num1.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num1,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num1)) {
+                input1=false;
+                input2=true;
+                reproducirSonido(successSound);
+            }
+        } else if(input2) {
+            dibujarIndicadorEstado(180, 160, "Ingresando segundo número", temaActual->naranja);
+            dibujarTextoConSombra("Segundo número:", 350, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            // Mostrar operación parcial
+            string operacionParcial = num1 + " × ?";
+            dibujarTextoConSombra(operacionParcial.c_str(), 350, 120, 20, Fade(temaActual->texto, 0.6f));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num2.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num2,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num2)) {
+                float a = stof(num1);
+                float b = stof(num2);
+                float r = a*b;
+                char buf[64];
+                sprintf(buf,"%.4f", r);
+                resultado = buf;
+                string h = num1 + " × " + num2 + " = " + buf;
+                historial.push_back(h);
+                input2 = false;
+                done = true;
+                reproducirSonido(successSound);
+            }
+        } else if(done) {
+            string operacionCompleta = num1 + " × " + num2;
+            mostrarResultadoBonito(250, 220, operacionCompleta, resultado);
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, Fade(temaActual->acento, animacionAlpha));
+            if(IsKeyPressed(KEY_ENTER)) {
+                reproducirSonido(clickSound);
+                return;
+            }
+        }
+        
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(temaActual->texto, 0.7f));
+        EndDrawing();
+    }
+}
+
+void pantallaDividir() {
+    string num1="", num2="";
+    bool input1=true, input2=false, done=false;
+    string resultado = "";
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+    
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        dibujarFondoAnimado();
+        
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.05f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        dibujarTextoConSombra("÷ DIVIDIR", 370, 40, 34, Fade(temaActual->acento, animacionAlpha));
+        
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, Fade(temaActual->tarjeta, animacionAlpha), 0.1f);
+        
+        if(input1) {
+            dibujarIndicadorEstado(180, 160, "Ingresando dividendo", temaActual->verde);
+            dibujarTextoConSombra("Dividendo:", 350, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num1.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num1,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num1)) {
+                input1=false;
+                input2=true;
+                reproducirSonido(successSound);
+            }
+        } else if(input2) {
+            dibujarIndicadorEstado(180, 160, "Ingresando divisor", temaActual->naranja);
+            dibujarTextoConSombra("Divisor:", 350, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            string operacionParcial = num1 + " ÷ ?";
+            dibujarTextoConSombra(operacionParcial.c_str(), 350, 120, 20, Fade(temaActual->texto, 0.6f));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num2.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num2,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num2)) {
+                float a=stof(num1), b=stof(num2);
+                if(b==0) {
+                    resultado = "ERROR: División por cero";
+                    reproducirSonido(errorSound);
+                    mostrarEfectoError(450, 250);
+                } else {
+                    float r=a/b;
+                    char buf[64];
+                    sprintf(buf,"%.4f",r);
+                    resultado = buf;
+                    string h = num1 + " ÷ " + num2 + " = " + buf;
+                    historial.push_back(h);
+                    reproducirSonido(successSound);
+                }
+                input2 = false;
+                done = true;
+            }
+        } else if(done) {
+            if(resultado.find("ERROR") != string::npos) {
+                dibujarTextoConSombra("Resultado:", 300, 220, 26, Fade(temaActual->rojo, animacionAlpha));
+                dibujarTextoConSombra(resultado.c_str(), 300, 250, 24, Fade(temaActual->rojo, animacionAlpha));
+            } else {
+                string operacionCompleta = num1 + " ÷ " + num2;
+                mostrarResultadoBonito(250, 220, operacionCompleta, resultado);
+            }
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, Fade(temaActual->acento, animacionAlpha));
+            if(IsKeyPressed(KEY_ENTER)) {
+                reproducirSonido(clickSound);
+                return;
+            }
+        }
+        
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(temaActual->texto, 0.7f));
+        EndDrawing();
+    }
+}
+
+void pantallaDistanciaPlanetas() {
+    struct Planet {
+        string name;
+        float dist;
+        Color color;
+    };
+    
+    vector<Planet> P = {
+        {"Sol", 149.6f, YELLOW},
+        {"Mercurio", 91.7f, GRAY},
+        {"Venus", 41.4f, ORANGE},
+        {"Marte", 78.3f, RED},
+        {"Jupiter", 628.7f, {255, 200, 100, 255}},
+        {"Saturno", 1275.0f, {210, 180, 140, 255}},
+        {"Urano", 2723.0f, {100, 200, 255, 255}},
+        {"Neptuno", 4351.0f, {50, 100, 255, 255}}
+    };
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        dibujarFondoAnimado();
+        
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.05f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        dibujarTextoConSombra("🪐 DISTANCIA DESDE LA TIERRA", 180, 40, 34, Fade(temaActual->acento, animacionAlpha));
+        dibujarTextoConSombra("(millones de kilómetros)", 320, 80, 20, Fade(temaActual->texto, 0.8f * animacionAlpha));
+        
+        Rectangle contenido = {80, 120, 740, 430};
+        dibujarTarjetaConSombra(contenido, Fade(temaActual->tarjeta, animacionAlpha), 0.1f);
+
+        float y = 150.0f;
+        for(auto &p : P) {
+            char buf[64];
+            sprintf(buf,"%.1f", p.dist);
+            
+            // Icono del planeta
+            DrawCircle(120, y + 15, 8, Fade(p.color, animacionAlpha));
+            if(p.name == "Saturno") {
+                DrawRing({120, y + 15}, 10, 13, 0, 360, 2, Fade(WHITE, 0.6f * animacionAlpha));
+            }
+            
+            // Nombre del planeta
+            DrawText(p.name.c_str(), 140, (int)y, 24, Fade(temaActual->texto, animacionAlpha));
+
+            // Distancia
+            DrawText(buf, 500, (int)y, 24, Fade(temaActual->verde, animacionAlpha));
+            DrawText("millones km", 580, (int)y, 20, Fade(temaActual->texto, 0.7f * animacionAlpha));
+
+            // Barra visual de distancia
+            float barWidth = (p.dist / 4351.0f) * 150.0f;
+            DrawRectangle(650, (int)(y + 10), (int)barWidth, 8, Fade(p.color, 0.7f * animacionAlpha));
+            DrawRectangleLines(650, (int)(y + 10), 150, 8, Fade(temaActual->texto, 0.3f * animacionAlpha));
+            
+            y += 45;
+        }
+        
+        // Información adicional
+        dibujarTextoConSombra("La Tierra está a 149.6 millones de km del Sol", 200, 500, 18, 
+                             Fade(temaActual->texto, 0.7f * animacionAlpha));
+        
+        dibujarTextoConSombra("BACKSPACE -> volver", 20, 20, 18, Fade(temaActual->texto, 0.7f));
+        EndDrawing();
+    }
+}
+
+void pantallaFibonacci() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+    vector<long long> secuencia;
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        dibujarFondoAnimado();
+        
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.05f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        dibujarTextoConSombra("∞ SECUENCIA FIBONACCI", 280, 40, 34, Fade(temaActual->acento, animacionAlpha));
+        
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, Fade(temaActual->tarjeta, animacionAlpha), 0.1f);
+        
+        if(input) {
+            dibujarIndicadorEstado(180, 160, "Ingresando número de términos", temaActual->verde);
+            dibujarTextoConSombra("Número de términos:", 330, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num)) {
+                int n = stoi(num);
+                if(n <= 0) {
+                    resultado = "Error: debe ser > 0";
+                    reproducirSonido(errorSound);
+                    mostrarEfectoError(450, 250);
+                } else if(n > 50) {
+                    resultado = "Error: máximo 50 términos";
+                    reproducirSonido(errorSound);
+                    mostrarEfectoError(450, 250);
+                } else {
+                    // Generar secuencia Fibonacci
+                    secuencia.clear();
+                    long long a = 0, b = 1;
+                    for(int i = 0; i < n; i++) {
+                        secuencia.push_back(a);
+                        long long temp = a + b;
+                        a = b;
+                        b = temp;
+                    }
+                    
+                    // Formatear resultado
+                    resultado = "";
+                    for(int i = 0; i < secuencia.size(); i++) {
+                        resultado += to_string(secuencia[i]);
+                        if(i < secuencia.size() - 1) resultado += ", ";
+                    }
+                    
+                    string h = "Fibonacci(" + num + ") = " + 
+                              (secuencia.size() > 5 ? 
+                               to_string(secuencia[0]) + ",...," + to_string(secuencia.back()) :
+                               resultado.substr(0, 40));
+                    historial.push_back(h);
+                    reproducirSonido(successSound);
+                }
+                input = false;
+                done = true;
+            }
+        } else if(done) {
+            if(resultado.find("Error") != string::npos) {
+                dibujarTextoConSombra("Error:", 300, 150, 26, Fade(temaActual->rojo, animacionAlpha));
+                dibujarTextoConSombra(resultado.c_str(), 300, 180, 24, Fade(temaActual->rojo, animacionAlpha));
+            } else {
+                dibujarTextoConSombra(("Secuencia Fibonacci (" + num + " términos):").c_str(), 
+                                    200, 130, 24, Fade(temaActual->acento, animacionAlpha));
+                
+                // Mostrar secuencia con scroll si es muy larga
+                int y_pos = 170;
+                string temp = resultado;
+                int maxWidth = 650;
+                int charCount = 0;
+                string currentLine = "";
+                
+                for(char c : resultado) {
+                    currentLine += c;
+                    charCount++;
+                    
+                    if(charCount > 60 && c == ',') {
+                        DrawText(currentLine.c_str(), 120, y_pos, 20, Fade(temaActual->texto, animacionAlpha));
+                        y_pos += 25;
+                        currentLine = "";
+                        charCount = 0;
+                    }
+                }
+                
+                if(!currentLine.empty()) {
+                    DrawText(currentLine.c_str(), 120, y_pos, 20, Fade(temaActual->texto, animacionAlpha));
+                }
+                
+                // Patrón visual de Fibonacci
+                int startX = 120;
+                int startY = 350;
+                int size = 8;
+                for(int i = 0; i < min(10, (int)secuencia.size()); i++) {
+                    int circles = static_cast<int>(min(secuencia[i], 5LL)); // Limitar para visualización
+                    for(int j = 0; j < circles; j++) {
+                        DrawCircle(startX + i * 50 + j * 10, startY, size,
+                                  Fade(temaActual->verde, 0.3f + j * 0.1f));
+                    }
+                }
+            }
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 450, 26, Fade(temaActual->acento, animacionAlpha));
+            if(IsKeyPressed(KEY_ENTER)) {
+                reproducirSonido(clickSound);
+                return;
+            }
+        }
+        
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(temaActual->texto, 0.7f));
+        EndDrawing();
+    }
+}
+
+void pantallaParImpar() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        dibujarFondoAnimado();
+        
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.05f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        dibujarTextoConSombra("⚡ PAR O IMPAR", 340, 40, 34, Fade(temaActual->acento, animacionAlpha));
+        
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, Fade(temaActual->tarjeta, animacionAlpha), 0.1f);
+        
+        if(input) {
+            dibujarIndicadorEstado(180, 160, "Ingresando número", temaActual->verde);
+            dibujarTextoConSombra("Ingresa un número:", 340, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num)) {
+                try {
+                    int n = stoi(num);
+                    if(n % 2 == 0) {
+                        resultado = "PAR";
+                        reproducirSonido(successSound);
+                    } else {
+                        resultado = "IMPAR";
+                        reproducirSonido(successSound);
+                    }
+                    string h = num + " es " + resultado;
+                    historial.push_back(h);
+                } catch(...) {
+                    resultado = "Error: número inválido";
+                    reproducirSonido(errorSound);
+                    mostrarEfectoError(450, 250);
+                }
+                input = false;
+                done = true;
+            }
+        } else if(done) {
+            if(resultado.find("Error") != string::npos) {
+                dibujarTextoConSombra("Error:", 300, 180, 26, Fade(temaActual->rojo, animacionAlpha));
+                dibujarTextoConSombra(resultado.c_str(), 300, 210, 24, Fade(temaActual->rojo, animacionAlpha));
+            } else {
+                dibujarTextoConSombra("El número", 300, 180, 26, Fade(temaActual->texto, animacionAlpha));
+                dibujarTextoConSombra(num.c_str(), 420, 180, 26, Fade(temaActual->acento, animacionAlpha));
+                dibujarTextoConSombra("es:", 480, 180, 26, Fade(temaActual->texto, animacionAlpha));
+                
+                Color colorResultado = (resultado == "PAR") ? temaActual->verde : temaActual->purpura;
+                dibujarTextoConSombra(resultado.c_str(), 520, 180, 32, Fade(colorResultado, animacionAlpha));
+                
+                // Icono decorativo animado
+                float tiempo = GetTime();
+                float centerX = 450.0f;
+                float centerY = 280.0f;
+                
+                if(resultado == "PAR") {
+                    // Círculo para PAR
+                    float pulso = 0.8f + sin(tiempo * 5) * 0.2f;
+                    DrawCircle(centerX, centerY, 50, Fade(temaActual->verde, 0.2f * pulso * animacionAlpha));
+                    DrawCircleLines(centerX, centerY, 50, Fade(temaActual->verde, animacionAlpha));
+                    
+                    // Efectos de partículas concéntricas
+                    for(int i = 0; i < 8; i++) {
+                        float angle = tiempo * 2 + i * (360/8) * DEG2RAD;
+                        float dist = 30 + sin(tiempo * 3 + i) * 10;
+                        float px = centerX + cos(angle) * dist;
+                        float py = centerY + sin(angle) * dist;
+                        DrawCircle(px, py, 3, Fade(temaActual->verde, 0.7f * animacionAlpha));
+                    }
+                } else {
+                    // Cuadrado para IMPAR
+                    float pulso = 0.8f + sin(tiempo * 7) * 0.2f;
+                    DrawRectangle(centerX - 40, centerY - 40, 80, 80, 
+                                 Fade(temaActual->purpura, 0.2f * pulso * animacionAlpha));
+                    DrawRectangleLines(centerX - 40, centerY - 40, 80, 80, 
+                                      Fade(temaActual->purpura, animacionAlpha));
+                    
+                    // Efectos de partículas en esquinas
+                    Vector2 esquinas[] = {
+                        {centerX - 35, centerY - 35},
+                        {centerX + 35, centerY - 35},
+                        {centerX + 35, centerY + 35},
+                        {centerX - 35, centerY + 35}
+                    };
+                    
+                    for(int i = 0; i < 4; i++) {
+                        float offset = sin(tiempo * 4 + i) * 5;
+                        DrawCircle(esquinas[i].x + offset, esquinas[i].y + offset, 4, 
+                                  Fade(temaActual->purpura, 0.8f * animacionAlpha));
+                    }
+                }
+            }
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 400, 26, Fade(temaActual->acento, animacionAlpha));
+            if(IsKeyPressed(KEY_ENTER)) {
+                reproducirSonido(clickSound);
+                return;
+            }
+        }
+        
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(temaActual->texto, 0.7f));
+        EndDrawing();
+    }
+}
+
+void pantallaFactorial() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+    long long factResult = 0;
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        dibujarFondoAnimado();
+        
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.05f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        dibujarTextoConSombra("! FACTORIAL", 360, 40, 34, Fade(temaActual->acento, animacionAlpha));
+        
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, Fade(temaActual->tarjeta, animacionAlpha), 0.1f);
+        
+        if(input) {
+            dibujarIndicadorEstado(180, 160, "Ingresando número", temaActual->verde);
+            dibujarTextoConSombra("Ingresa un número:", 340, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(num.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(num,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(num)) {
+                try {
+                    int n = stoi(num);
+                    if(n < 0) {
+                        resultado = "Error: no existe factorial de negativo";
+                        reproducirSonido(errorSound);
+                        mostrarEfectoError(450, 250);
+                    } else if(n > 20) {
+                        resultado = "Error: número muy grande (máx 20)";
+                        reproducirSonido(errorSound);
+                        mostrarEfectoError(450, 250);
+                    } else {
+                        factResult = 1;
+                        for(int i = 1; i <= n; i++) {
+                            factResult *= i;
+                        }
+                        resultado = to_string(factResult);
+                        string h = num + "! = " + resultado;
+                        historial.push_back(h);
+                        reproducirSonido(successSound);
+                    }
+                } catch(...) {
+                    resultado = "Error: número inválido";
+                    reproducirSonido(errorSound);
+                    mostrarEfectoError(450, 250);
+                }
+                input = false;
+                done = true;
+            }
+        } else if(done) {
+            if(resultado.find("Error") != string::npos) {
+                dibujarTextoConSombra("Error:", 300, 180, 26, Fade(temaActual->rojo, animacionAlpha));
+                dibujarTextoConSombra(resultado.c_str(), 300, 210, 24, Fade(temaActual->rojo, animacionAlpha));
+            } else {
+                // Mostrar cálculo paso a paso
+                dibujarTextoConSombra("Factorial de", 300, 150, 26, Fade(temaActual->texto, animacionAlpha));
+                dibujarTextoConSombra(num.c_str(), 430, 150, 26, Fade(temaActual->acento, animacionAlpha));
+                
+                // Mostrar la operación completa
+                int n = stoi(num);
+                string operacion = " = ";
+                for(int i = 1; i <= n; i++) {
+                    operacion += to_string(i);
+                    if(i < n) operacion += " × ";
+                }
+                
+                DrawText(operacion.c_str(), 300, 190, 22, Fade(temaActual->texto, 0.8f * animacionAlpha));
+                
+                // Resultado
+                dibujarTextoConSombra("= ", 300, 230, 28, Fade(temaActual->texto, animacionAlpha));
+                dibujarTextoConSombra(resultado.c_str(), 350, 230, 28, Fade(temaActual->verde, animacionAlpha));
+                
+                // Visualización de puntos progresivos
+                int startX = 300;
+                int startY = 300;
+                int pointSize = 6;
+                int pointsPerRow = 10;
+                
+                for(int i = 1; i <= min(n, 30); i++) {
+                    int row = (i - 1) / pointsPerRow;
+                    int col = (i - 1) % pointsPerRow;
+                    int x = startX + col * 25;
+                    int y = startY + row * 25;
+                    
+                    Color pointColor;
+                    float hue = (float)i / max(n, 1) * 360.0f;
+                    pointColor = ColorFromHSV(hue, 0.8f, 0.9f);
+                    
+                    DrawCircle(x, y, pointSize, Fade(pointColor, animacionAlpha));
+                    DrawText(TextFormat("%d", i), x - 4, y - 5, 10, Fade(BLACK, animacionAlpha));
+                }
+                
+                if(n > 30) {
+                    DrawText("...", startX + pointsPerRow * 25, startY + 2 * 25, 20, 
+                            Fade(temaActual->texto, 0.7f * animacionAlpha));
+                }
+            }
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 450, 26, Fade(temaActual->acento, animacionAlpha));
+            if(IsKeyPressed(KEY_ENTER)) {
+                reproducirSonido(clickSound);
+                return;
+            }
+        }
+        
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(temaActual->texto, 0.7f));
+        EndDrawing();
+    }
+}
+
+void pantallaPotencia() {
+    string base = "", exponente = "";
+    bool input1 = true, input2 = false, done = false;
+    string resultado = "";
+    double baseVal = 0, exponenteVal = 0;
+    
+    animacionAlpha = 0.0f;
+    animacionEntrando = true;
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(temaActual->fondo);
+        dibujarFondoAnimado();
+        
+        if(animacionEntrando && animacionAlpha < 1.0f) {
+            animacionAlpha += 0.05f;
+            if(animacionAlpha >= 1.0f) animacionEntrando = false;
+        }
+        
+        dibujarTextoConSombra("↑ POTENCIA", 360, 40, 34, Fade(temaActual->acento, animacionAlpha));
+        
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, Fade(temaActual->tarjeta, animacionAlpha), 0.1f);
+        
+        if(input1) {
+            dibujarIndicadorEstado(180, 160, "Ingresando base", temaActual->verde);
+            dibujarTextoConSombra("Base:", 380, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(base.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(base,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(base)) {
+                input1 = false;
+                input2 = true;
+                reproducirSonido(successSound);
+            }
+        } else if(input2) {
+            dibujarIndicadorEstado(180, 160, "Ingresando exponente", temaActual->naranja);
+            dibujarTextoConSombra("Exponente:", 350, 150, 24, Fade(temaActual->texto, animacionAlpha));
+            
+            // Mostrar operación parcial
+            string operacionParcial = base + " ^ ?";
+            dibujarTextoConSombra(operacionParcial.c_str(), 350, 120, 20, Fade(temaActual->texto, 0.6f));
+            
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(temaActual->acento,0.1f), 0.1f);
+            DrawText(exponente.c_str(),220,220,32,Fade(temaActual->texto, animacionAlpha));
+            
+            tecladoNumerico(exponente,250,300);
+            
+            if(IsKeyPressed(KEY_ENTER) && esNumeroValido(exponente)) {
+                try {
+                    baseVal = stod(base);
+                    int exp = stoi(exponente);
+                    
+                    if(exp < 0) {
+                        resultado = "Error: exponente debe ser ≥ 0";
+                        reproducirSonido(errorSound);
+                        mostrarEfectoError(450, 250);
+                    } else if(exp > 1000) {
+                        resultado = "Error: exponente muy grande";
+                        reproducirSonido(errorSound);
+                        mostrarEfectoError(450, 250);
+                    } else {
+                        double potencia = pow(baseVal, exp);
+                        char buf[64];
+                        
+                        if(potencia > 1e15) {
+                            sprintf(buf, "%.4e", potencia);
+                        } else {
+                            sprintf(buf, "%.4f", potencia);
+                        }
+                        
+                        resultado = buf;
+                        string h = base + "^" + exponente + " = " + buf;
+                        historial.push_back(h);
+                        reproducirSonido(successSound);
+                    }
+                } catch(...) {
+                    resultado = "Error: números inválidos";
+                    reproducirSonido(errorSound);
+                    mostrarEfectoError(450, 250);
+                }
+                input2 = false;
+                done = true;
+            }
+        } else if(done) {
+            if(resultado.find("Error") != string::npos) {
+                dibujarTextoConSombra("Error:", 300, 180, 26, Fade(temaActual->rojo, animacionAlpha));
+                dibujarTextoConSombra(resultado.c_str(), 300, 210, 24, Fade(temaActual->rojo, animacionAlpha));
+            } else {
+                string operacionCompleta = base + " ^ " + exponente;
+                mostrarResultadoBonito(250, 220, operacionCompleta, resultado);
+                
+                // Visualización gráfica de la potencia
+                int exp = stoi(exponente);
+                if(exp <= 10) {
+                    dibujarTextoConSombra("Descomposición:", 300, 250, 22, 
+                                        Fade(temaActual->texto, 0.8f * animacionAlpha));
+                    
+                    string descomposicion = base;
+                    for(int i = 1; i < exp; i++) {
+                        descomposicion += " × " + base;
+                    }
+                    
+                    // Mostrar descomposición en líneas si es muy larga
+                    int y_pos = 280;
+                    string temp = descomposicion;
+                    while(temp.length() > 0) {
+                        string line = temp.substr(0, 50);
+                        DrawText(line.c_str(), 200, y_pos, 18, 
+                                Fade(temaActual->texto, 0.7f * animacionAlpha));
+                        y_pos += 22;
+                        if(temp.length() > 50) temp = temp.substr(50);
+                        else break;
+                    }
+                }
+                
+                // Efecto visual de crecimiento exponencial
+                if(exp > 0) {
+                    int startX = 300;
+                    int startY = 350;
+                    int maxHeight = 60;
+                    
+                    for(int i = 0; i <= min(exp, 8); i++) {
+                        double valor = pow(baseVal, i);
+                        int height = (int)((valor / pow(baseVal, min(exp, 8))) * maxHeight);
+                        int width = 30;
+                        int x = startX + i * 40;
+                        
+                        Color barColor = ColorFromHSV((float)i / max(exp, 1) * 120.0f, 0.8f, 0.9f);
+                        DrawRectangle(x, startY - height, width, height, 
+                                     Fade(barColor, 0.6f * animacionAlpha));
+                        DrawRectangleLines(x, startY - height, width, height, 
+                                          Fade(barColor, animacionAlpha));
+                        
+                        if(i == exp) {
+                            DrawRectangleLines(x - 2, startY - height - 2, width + 4, height + 4, 
+                                              Fade(temaActual->verde, animacionAlpha));
+                        }
+                    }
+                }
+            }
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 450, 26, Fade(temaActual->acento, animacionAlpha));
+            if(IsKeyPressed(KEY_ENTER)) {
+                reproducirSonido(clickSound);
+                return;
+            }
+        }
+        
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(temaActual->texto, 0.7f));
+        EndDrawing();
+    }
+}

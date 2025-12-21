@@ -1,0 +1,2129 @@
+json raylib: g++ main.cpp -o programa.exe -I"C:\raylib\include" -L"C:\raylib\lib" -lraylib -lopengl32 -lgdi32 -lwinmm
+
+ruta: cd /c/Users/saezi/Desktop/Proyecto
+
+main v1:
+#include <raylib.h>
+#include <string>
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// ===============================
+//  PROTOTIPOS
+// ===============================
+void pantallaSumarRestar();
+void pantallaMultiplicar();
+void pantallaDividir();
+void pantallaFactorial();
+void pantallaFibonacci();
+void pantallaNumeroPrimo();
+void pantallaParImpar();
+void pantallaPotencia();
+void pantallaProbabilidad();
+void pantallaDistanciaPlanetas();
+
+
+// Opciones del menú
+const char *menuItems[] = {
+    "1) Sumar / Restar",
+    "2) Multiplicar",
+    "3) Dividir",
+    "4) Factorial",
+    "5) Fibonacci",
+    "6) Numero primo",
+    "7) Par o Impar",
+    "8) Potencia",
+    "9) Probabilidad",
+    "10) Distancia planetas",
+    "11) Salir"
+};
+
+int menuCount = 11;
+
+int main() {
+
+    // Crear ventana
+    InitWindow(800, 600, "Calculadora Moya - Raylib");
+    SetTargetFPS(60);
+
+    string nombreUsuario = "";
+    bool nombreIngresado = false;
+
+    while (!WindowShouldClose()) {
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        // ==========================
+        //  PANTALLA INGRESAR NOMBRE
+        // ==========================
+        if (!nombreIngresado) {
+
+            DrawText("Bienvenido!", 340, 80, 30, DARKBLUE);
+            DrawText("Ingresa tu nombre y presiona ENTER:", 180, 200, 20, BLACK);
+
+            DrawRectangle(180, 250, 450, 40, LIGHTGRAY);
+            DrawText(nombreUsuario.c_str(), 190, 260, 20, BLACK);
+
+            int key = GetCharPressed();
+            while (key > 0) {
+                if (key >= 32 && key <= 125) {
+                    nombreUsuario.push_back((char)key);
+                }
+                key = GetCharPressed();
+            }
+            if (IsKeyPressed(KEY_BACKSPACE) && nombreUsuario.length() > 0) {
+                nombreUsuario.pop_back();
+            }
+            if (IsKeyPressed(KEY_ENTER) && nombreUsuario.length() > 0) {
+                nombreIngresado = true;
+            }
+        }
+
+        // ==========================
+        //  MENÚ PRINCIPAL
+        // ==========================
+        else {
+
+            string saludo = "Hola, " + nombreUsuario + "! Selecciona una opcion:";
+            DrawText(saludo.c_str(), 200, 50, 25, DARKGREEN);
+
+            int startY = 120;
+            for (int i = 0; i < menuCount; i++) {
+                DrawText(menuItems[i], 280, startY + (i * 35), 20, BLACK);
+            }
+
+            DrawText("Presiona una tecla del 1 al 11", 250, 560, 20, GRAY);
+
+            // DETECTAR OPCIÓN
+            if (IsKeyPressed(KEY_ONE))      pantallaSumarRestar();
+            if (IsKeyPressed(KEY_TWO))      pantallaMultiplicar();
+            if (IsKeyPressed(KEY_THREE))    pantallaDividir();
+            if (IsKeyPressed(KEY_FOUR))     pantallaFactorial();
+            if (IsKeyPressed(KEY_FIVE))     pantallaFibonacci();
+            if (IsKeyPressed(KEY_SIX))      pantallaNumeroPrimo();
+            if (IsKeyPressed(KEY_SEVEN))    pantallaParImpar();
+            if (IsKeyPressed(KEY_EIGHT))    pantallaPotencia();
+            if (IsKeyPressed(KEY_NINE))     pantallaProbabilidad();
+            if (IsKeyPressed(KEY_ZERO))     pantallaDistanciaPlanetas();   // TEMPORAL (10)
+            if (IsKeyPressed(KEY_MINUS))    CloseWindow();                 // TEMPORAL (11)
+
+        }
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+
+
+// =====================================
+//   FUNCIONES DE CADA OPCIÓN
+//   (Pantallas independientes)
+// =====================================
+
+void pantallaSumarRestar() {
+
+    string numeroActual = "";
+    string numero1 = "";
+    string numero2 = "";
+    bool ingresandoPrimero = true;
+    bool resultadoListo = false;
+    float resultado = 0;
+
+    vector<string> historial;
+
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+
+        // Entrada de dígitos
+        int key = GetCharPressed();
+        while (key > 0) {
+            if (key >= '0' && key <= '9') {
+                numeroActual.push_back((char)key);
+            }
+            key = GetCharPressed();
+        }
+
+        // Borrar un dígito
+        if (IsKeyPressed(KEY_BACKSPACE) && numeroActual.length() > 0) {
+            numeroActual.pop_back();
+        }
+
+        // Cuando el usuario presiona ENTER, confirma número
+        if (IsKeyPressed(KEY_ENTER) && numeroActual.length() > 0) {
+
+            if (ingresandoPrimero) {
+                numero1 = numeroActual;
+                numeroActual = "";
+                ingresandoPrimero = false;
+            } else {
+                numero2 = numeroActual;
+                numeroActual = "";
+                resultadoListo = false;
+            }
+        }
+
+        // SUMAR → tecla S
+        if (IsKeyPressed(KEY_S) && numero1 != "" && numero2 != "") {
+            resultado = stof(numero1) + stof(numero2);
+            resultadoListo = true;
+            historial.push_back(numero1 + " + " + numero2 + " = " + to_string(resultado));
+        }
+
+        // RESTAR → tecla R
+        if (IsKeyPressed(KEY_R) && numero1 != "" && numero2 != "") {
+            resultado = stof(numero1) - stof(numero2);
+            resultadoListo = true;
+            historial.push_back(numero1 + " - " + numero2 + " = " + to_string(resultado));
+        }
+
+        // ===================== DIBUJO =====================
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+
+        DrawText("SUMAR / RESTAR", 260, 20, 30, BLUE);
+        DrawText("BACKSPACE = volver al menu", 10, 560, 20, RED);
+
+        if (ingresandoPrimero)
+            DrawText("Ingresa PRIMER numero:", 50, 100, 20, BLACK);
+        else
+            DrawText("Ingresa SEGUNDO numero:", 50, 100, 20, BLACK);
+
+        DrawText(numeroActual.c_str(), 50, 140, 30, DARKBLUE);
+
+        if (numero1 != "")
+            DrawText(("Numero 1: " + numero1).c_str(), 50, 200, 20, BLACK);
+        if (numero2 != "")
+            DrawText(("Numero 2: " + numero2).c_str(), 50, 230, 20, BLACK);
+
+        DrawText("S = Sumar   |   R = Restar   |   ENTER = Confirmar numero", 50, 300, 20, DARKGRAY);
+
+        if (resultadoListo) {
+            DrawText(("RESULTADO: " + to_string(resultado)).c_str(), 50, 350, 28, RED);
+        }
+
+        // HISTORIAL
+        DrawText("Historial:", 500, 100, 22, BLACK);
+        int y = 130;
+        for (int i = max(0, (int)historial.size() - 10); i < historial.size(); i++) {
+            DrawText(historial[i].c_str(), 500, y, 18, DARKGREEN);
+            y += 22;
+        }
+
+        EndDrawing();
+    }
+}
+
+
+void pantallaMultiplicar() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: MULTIPLICAR", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaDividir() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: DIVIDIR", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaFactorial() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: FACTORIAL", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaFibonacci() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: FIBONACCI", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaNumeroPrimo() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: NUMERO PRIMO", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaParImpar() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: PAR / IMPAR", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaPotencia() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: POTENCIA", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaProbabilidad() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: PROBABILIDAD", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaDistanciaPlanetas() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: DISTANCIA PLANETAS", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+v5: 
+
+/*******************************************************************************************
+    CALCULADORA MOYA – GUI RAYLIB
+    COMPLETA CON TODAS LAS FUNCIONES
+********************************************************************************************/
+
+#include <raylib.h>
+#include <string>
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <cstdio>
+
+using namespace std;
+
+// ======================================================
+//      ESTRUCTURA PARA HISTORIAL
+// ======================================================
+vector<string> historial;
+string userName = "";
+
+// ======================================================
+//      DECLARACIÓN DE FUNCIONES
+// ======================================================
+void pantallaInicial();
+void pantallaSumarRestar();
+void pantallaMultiplicar();
+void pantallaDividir();
+void pantallaDistanciaPlanetas();
+void pantallaFibonacci();
+void pantallaParImpar();
+void pantallaFactorial();
+void pantallaPotencia();
+
+void tecladoNumerico(string &buffer, int x, int y);
+bool botonSimple(Rectangle r, const char *text);
+void dibujarFondoAnimado();
+
+// ======================================================
+//      PALETA DE COLORES
+// ======================================================
+const Color BG_COLOR = {245, 245, 245, 255};
+const Color ACCENT_COLOR = {55, 125, 255, 255};
+const Color ACCENT2_COLOR = {25, 80, 200, 255};
+const Color TEXT_COLOR = {20, 20, 20, 255};
+const Color VERDE_COLOR = {76, 175, 80, 255};
+const Color VERDE2_COLOR = {56, 142, 60, 255};
+const Color NARANJA_COLOR = {255, 152, 0, 255};
+const Color PURPLE_COLOR = {156, 39, 176, 255};
+const Color WHITE_COLOR = {255, 255, 255, 255};
+const Color RED_COLOR = {255, 0, 0, 255};
+
+// ======================================================
+//      OPCIONES MENÚ
+// ======================================================
+const char *menuItems[] = {
+    "1) Sumar / Restar",
+    "2) Multiplicar",
+    "3) Dividir",
+    "4) Distancia Planetas",
+    "5) Fibonacci",
+    "6) Par/Impar",
+    "7) Factorial",
+    "8) Potencia",
+    "9) Ver Historial",
+    "0) Salir"
+};
+int menuCount = 10;
+
+// ======================================================
+//      FUNCIÓN PRINCIPAL
+// ======================================================
+int main() {
+    InitWindow(900, 600, "Calculadora Moya GUI - Completa");
+    SetTargetFPS(60);
+
+    pantallaInicial();
+
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+
+        dibujarFondoAnimado();
+
+        string titulo = "BIENVENIDO " + userName + " A CALCULADORA MOYA";
+        DrawText(titulo.c_str(), 180, 40, 36, ACCENT_COLOR);
+
+        Rectangle marco = {200, 120, 500, 420};
+        DrawRectangleRounded(marco, 0.1f, 12, Fade(WHITE_COLOR, 0.8f));
+        DrawRectangleRoundedLinesEx(marco, 0.1f, 12, 3.0f, ACCENT2_COLOR);
+
+        int y = 150;
+        for(int i = 0; i < menuCount; i++) {
+            Rectangle opcionRect = {225, (float)(y-5), 450, 40};
+            bool overOpcion = CheckCollisionPointRec(GetMousePosition(), opcionRect);
+
+            if(overOpcion) {
+                DrawRectangleRounded(opcionRect, 0.3f, 8, Fade(VERDE_COLOR, 0.2f));
+            }
+
+            DrawText(menuItems[i], 235, y, 24, overOpcion ? VERDE2_COLOR : TEXT_COLOR);
+            y += 45;
+        }
+
+        DrawText("Presiona una tecla (0-9)", 320, 540, 20, ACCENT_COLOR);
+
+        if (IsKeyPressed(KEY_ONE)) pantallaSumarRestar();
+        if (IsKeyPressed(KEY_TWO)) pantallaMultiplicar();
+        if (IsKeyPressed(KEY_THREE)) pantallaDividir();
+        if (IsKeyPressed(KEY_FOUR)) pantallaDistanciaPlanetas();
+        if (IsKeyPressed(KEY_FIVE)) pantallaFibonacci();
+        if (IsKeyPressed(KEY_SIX)) pantallaParImpar();
+        if (IsKeyPressed(KEY_SEVEN)) pantallaFactorial();
+        if (IsKeyPressed(KEY_EIGHT)) pantallaPotencia();
+        if (IsKeyPressed(KEY_NINE)) {
+            while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+                BeginDrawing();
+                ClearBackground(BG_COLOR);
+                dibujarFondoAnimado();
+                
+                DrawText("HISTORIAL", 350, 40, 34, ACCENT_COLOR);
+
+                int yy = 120;
+                for(string h : historial) {
+                    DrawText(h.c_str(), 150, yy, 22, TEXT_COLOR);
+                    yy += 30;
+                }
+
+                DrawText("BACKSPACE -> volver", 20, 20, 20, TEXT_COLOR);
+                EndDrawing();
+            }
+        }
+        if (IsKeyPressed(KEY_ZERO)) CloseWindow();
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+
+// ======================================================
+//      PANTALLA INICIAL
+// ======================================================
+void pantallaInicial() {
+    string nombre = "";
+    bool activo = true;
+    
+    while(activo && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        
+        for(int i = 0; i < 20; i++) {
+            DrawCircle(GetRandomValue(0, 900), GetRandomValue(0, 600), 
+                      GetRandomValue(2, 8), Fade(ACCENT_COLOR, 0.3f));
+            DrawCircle(GetRandomValue(0, 900), GetRandomValue(0, 600), 
+                      GetRandomValue(2, 6), Fade(VERDE_COLOR, 0.2f));
+        }
+        
+        DrawText("CALCULADORA MOYA", 250, 100, 50, ACCENT_COLOR);
+        DrawText("Por favor, ingresa tu nombre:", 280, 200, 28, TEXT_COLOR);
+        
+        Rectangle campo = {200, 250, 500, 60};
+        DrawRectangleRounded(campo, 0.2f, 8, Fade(WHITE_COLOR, 0.9f));
+        DrawRectangleRoundedLinesEx(campo, 0.2f, 8, 2, ACCENT_COLOR);
+        DrawText(nombre.c_str(), 220, 265, 32, TEXT_COLOR);
+        
+        Rectangle btnContinuar = {350, 350, 200, 60};
+        bool sobreBtn = CheckCollisionPointRec(GetMousePosition(), btnContinuar);
+        DrawRectangleRounded(btnContinuar, 0.3f, 8, sobreBtn ? VERDE_COLOR : VERDE2_COLOR);
+        DrawText("CONTINUAR", 380, 365, 28, WHITE_COLOR);
+        
+        int key = GetCharPressed();
+        while (key > 0) {
+            if ((key >= 32) && (key <= 125) && (nombre.size() < 20)) {
+                nombre += (char)key;
+            }
+            key = GetCharPressed();
+        }
+        
+        if (IsKeyPressed(KEY_BACKSPACE) && !nombre.empty()) {
+            nombre.pop_back();
+        }
+        
+        if ((IsKeyPressed(KEY_ENTER) && !nombre.empty()) || 
+            (sobreBtn && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !nombre.empty())) {
+            userName = nombre;
+            activo = false;
+        }
+        
+        DrawText("Presiona ENTER o haz clic en CONTINUAR", 260, 450, 22, Fade(TEXT_COLOR, 0.7f));
+        
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      FONDO ANIMADO
+// ======================================================
+void dibujarFondoAnimado() {
+    float tiempo = GetTime();
+    
+    for(int i = 0; i < 15; i++) {
+        float x = 100 + (i * 60) + sin(tiempo + i) * 20;
+        float y = 80 + cos(tiempo * 0.7 + i) * 15;
+        float radio = 5 + sin(tiempo * 0.5 + i) * 3;
+        DrawCircle(x, y, radio, Fade(ACCENT_COLOR, 0.1f));
+    }
+    
+    for(int i = 0; i < 10; i++) {
+        float x = 700 + cos(tiempo * 0.8 + i) * 25;
+        float y = 500 + sin(tiempo * 0.6 + i) * 20;
+        DrawCircle(x, y, 4, Fade(VERDE_COLOR, 0.15f));
+    }
+}
+
+// ======================================================
+//          BOTÓN SIMPLE
+// ======================================================
+bool botonSimple(Rectangle r, const char *text) {
+    bool over = CheckCollisionPointRec(GetMousePosition(), r);
+    Color colorBoton = over ? Fade(ACCENT2_COLOR,0.9f) : Fade(ACCENT_COLOR,0.7f);
+    
+    if(over) {
+        r.y -= 2;
+    }
+    
+    DrawRectangleRounded(r, 0.3f, 12, colorBoton);
+    DrawRectangleRoundedLinesEx(r, 0.3f, 12, 2, over ? WHITE_COLOR : ACCENT2_COLOR);
+    DrawText(text, r.x + (r.width - MeasureText(text, 26))/2, r.y + 15, 26, WHITE_COLOR);
+    
+    return (over && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+}
+
+// ======================================================
+//          TECLADO NUMÉRICO
+// ======================================================
+void tecladoNumerico(string &buffer, int x, int y) {
+    const char *nums[9] = {"1","2","3","4","5","6","7","8","9"};
+    int idx = 0;
+
+    for(int j=0;j<3;j++) {
+        for(int i=0;i<3;i++) {
+            Rectangle r = { (float)(x + i*80), (float)(y + j*70), 70,60 };
+            bool over = CheckCollisionPointRec(GetMousePosition(), r);
+            Color colorBoton = over ? Fade(ACCENT2_COLOR,0.85f) : Fade(ACCENT_COLOR,0.60f);
+            
+            DrawRectangleRounded(r, 0.3f, 8, colorBoton);
+            DrawRectangleRoundedLinesEx(r, 0.3f, 8, 2, over ? WHITE_COLOR : ACCENT2_COLOR);
+            DrawText(nums[idx], r.x+25, r.y+12, 28, WHITE_COLOR);
+
+            if(over && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                buffer += nums[idx];
+
+            idx++;
+        }
+    }
+
+    // Cero
+    Rectangle r0 = { (float)x+80, (float)(y+3*70), 70,60 };
+    bool over0 = CheckCollisionPointRec(GetMousePosition(), r0);
+    Color colorBoton0 = over0 ? Fade(ACCENT2_COLOR,0.85f) : Fade(ACCENT_COLOR,0.60f);
+    DrawRectangleRounded(r0, 0.3f, 8, colorBoton0);
+    DrawRectangleRoundedLinesEx(r0, 0.3f, 8, 2, over0 ? WHITE_COLOR : ACCENT2_COLOR);
+    DrawText("0", r0.x+25, r0.y+12, 28, WHITE_COLOR);
+    if(over0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) buffer += "0";
+
+    // Signo negativo
+    Rectangle rNeg = { (float)x+160, (float)(y+3*70), 70,60 };
+    bool overNeg = CheckCollisionPointRec(GetMousePosition(), rNeg);
+    Color colorBotonNeg = overNeg ? Fade(NARANJA_COLOR,0.85f) : Fade(NARANJA_COLOR,0.60f);
+    DrawRectangleRounded(rNeg, 0.3f, 8, colorBotonNeg);
+    DrawRectangleRoundedLinesEx(rNeg, 0.3f, 8, 2, overNeg ? WHITE_COLOR : Fade(NARANJA_COLOR, 0.8f));
+    DrawText("-", rNeg.x+25, rNeg.y+12, 28, WHITE_COLOR);
+    if(overNeg && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if(buffer.empty() || (buffer.length() > 0 && buffer[0] != '-'))
+            buffer = "-" + buffer;
+    }
+
+    // Borrar
+    Rectangle rb = { (float)x, (float)(y+3*70), 70,60 };
+    bool overB = CheckCollisionPointRec(GetMousePosition(), rb);
+    Color colorBotonB = overB ? Fade(ACCENT2_COLOR,0.85f) : Fade(RED_COLOR,0.60f);
+    DrawRectangleRounded(rb, 0.3f, 8, colorBotonB);
+    DrawRectangleRoundedLinesEx(rb, 0.3f, 8, 2, overB ? WHITE_COLOR : Fade(RED_COLOR, 0.8f));
+    DrawText("<-", rb.x+15, rb.y+12, 28, WHITE_COLOR);
+    if(overB && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        if(!buffer.empty()) buffer.pop_back();
+}
+
+// ======================================================
+//      SUMA / RESTA
+// ======================================================
+void pantallaSumarRestar() {
+    string op = "";
+    string num1 = "", num2 = "";
+    bool choose = true, input1=false, input2=false, done=false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+
+        DrawText("SUMAR / RESTAR", 310, 40, 34, ACCENT_COLOR);
+
+        if(choose) {
+            DrawText("Elige operación:", 350, 130, 24, TEXT_COLOR);
+
+            Rectangle addR = {300,200,120,60};
+            Rectangle resR = {480,200,120,60};
+
+            if (botonSimple(addR, "+")) { op = "+"; choose=false; input1=true; }
+            if (botonSimple(resR, "-")) { op = "-"; choose=false; input1=true; }
+        }
+        else if(input1) {
+            DrawText("Primer número:", 350, 130, 24, TEXT_COLOR);
+
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num1.c_str(), 280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num1, 300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num1.empty() && num1 != "-") {
+                input1=false;
+                input2=true;
+            }
+        }
+        else if(input2) {
+            DrawText("Segundo número:", 350, 130, 24, TEXT_COLOR);
+
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num2.c_str(), 280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num2, 300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num2.empty() && num2 != "-") {
+                float a = stof(num1);
+                float b = stof(num2);
+                float r = (op == "+") ? a+b : a-b;
+
+                char buf[64];
+                sprintf(buf,"%.4f",r);
+                resultado = buf;
+
+                string h = num1 + " " + op + " " + num2 + " = " + buf;
+                historial.push_back(h);
+
+                input2 = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            DrawText("Resultado:", 300, 200, 26, ACCENT2_COLOR);
+            DrawText(resultado.c_str(), 420, 200, 26, TEXT_COLOR);
+            DrawText("ENTER -> volver", 350, 540, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        DrawText("BACKSPACE -> volver", 20, 20, 18, TEXT_COLOR);
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      MULTIPLICAR
+// ======================================================
+void pantallaMultiplicar() {
+    string num1="", num2="";
+    bool input1=true, input2=false, done=false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        DrawText("MULTIPLICAR", 350, 40, 34, ACCENT_COLOR);
+
+        if(input1) {
+            DrawText("Primer número:", 350, 130, 24, TEXT_COLOR);
+
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num1.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num1,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num1.empty() && num1 != "-") {
+                input1=false;
+                input2=true;
+            }
+        }
+        else if(input2) {
+            DrawText("Segundo número:", 350, 130, 24, TEXT_COLOR);
+
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num2.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num2,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num2.empty() && num2 != "-") {
+                float a = stof(num1);
+                float b = stof(num2);
+                float r = a*b;
+
+                char buf[64];
+                sprintf(buf,"%.4f", r);
+                resultado = buf;
+
+                string h = num1 + " * " + num2 + " = " + buf;
+                historial.push_back(h);
+
+                input2 = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            DrawText("Resultado:", 300, 200, 26, ACCENT2_COLOR);
+            DrawText(resultado.c_str(), 420, 200, 26, TEXT_COLOR);
+            DrawText("ENTER -> volver", 350, 540, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        DrawText("BACKSPACE -> volver", 20,20,18,TEXT_COLOR);
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      DIVIDIR
+// ======================================================
+void pantallaDividir() {
+    string num1="", num2="";
+    bool input1=true, input2=false, done=false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        DrawText("DIVIDIR", 390, 40, 34, ACCENT_COLOR);
+
+        if(input1) {
+            DrawText("Dividendo:", 350, 130, 24, TEXT_COLOR);
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num1.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num1,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num1.empty() && num1 != "-") {
+                input1=false;
+                input2=true;
+            }
+        }
+        else if(input2) {
+            DrawText("Divisor:", 350, 130, 24, TEXT_COLOR);
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num2.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num2,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num2.empty() && num2 != "-") {
+                float a=stof(num1), b=stof(num2);
+                if(b==0) {
+                    resultado = "ERROR: División por cero";
+                }
+                else {
+                    float r=a/b;
+                    char buf[64];
+                    sprintf(buf,"%.4f",r);
+                    resultado = buf;
+
+                    string h = num1 + " / " + num2 + " = " + buf;
+                    historial.push_back(h);
+                }
+                input2 = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            DrawText("Resultado:", 300, 200, 26, ACCENT2_COLOR);
+            DrawText(resultado.c_str(), 420, 200, 26, TEXT_COLOR);
+            DrawText("ENTER -> volver", 350, 540, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        DrawText("BACKSPACE -> volver", 20,20,18,TEXT_COLOR);
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      DISTANCIAS PLANETAS
+// ======================================================
+void pantallaDistanciaPlanetas() {
+    struct Planet { string name; float dist; };
+    vector<Planet> P = {
+        {"Sol",       149.6f},
+        {"Mercurio",   91.7f},
+        {"Venus",      41.4f},
+        {"Marte",      78.3f},
+        {"Jupiter",  628.7f},
+        {"Saturno", 1275.0f},
+        {"Urano",   2723.0f},
+        {"Neptuno", 4351.0f}
+    };
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+
+        DrawText("Distancia desde la Tierra (millones km)", 140, 40, 28, ACCENT_COLOR);
+
+        int y = 120;
+        for(auto &p : P) {
+            char buf[64];
+            sprintf(buf,"%.1f", p.dist);
+
+            DrawText(p.name.c_str(), 250, y, 26, TEXT_COLOR);
+            DrawText(buf,           520, y, 26, ACCENT2_COLOR);
+            y += 50;
+        }
+
+        DrawText("BACKSPACE -> volver", 20, 20, 18, TEXT_COLOR);
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      FIBONACCI
+// ======================================================
+void pantallaFibonacci() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        DrawText("SECUENCIA FIBONACCI", 300, 40, 34, ACCENT_COLOR);
+
+        if(input) {
+            DrawText("Número de términos:", 330, 130, 24, TEXT_COLOR);
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num.empty() && num != "-") {
+                int n = stoi(num);
+                if(n <= 0) {
+                    resultado = "Error: debe ser > 0";
+                }
+                else if(n > 50) {
+                    resultado = "Error: máximo 50 términos";
+                }
+                else {
+                    string fib_seq = "";
+                    long long a = 0, b = 1;
+                    
+                    for(int i = 0; i < n; i++) {
+                        fib_seq += to_string(a);
+                        if(i < n-1) fib_seq += ", ";
+                        
+                        long long temp = a + b;
+                        a = b;
+                        b = temp;
+                    }
+                    
+                    resultado = fib_seq;
+                    string h = "Fibonacci(" + num + ") = " + fib_seq.substr(0, 40) + "...";
+                    historial.push_back(h);
+                }
+                input = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            DrawText("Secuencia Fibonacci:", 300, 130, 24, ACCENT2_COLOR);
+            
+            int y_pos = 180;
+            string temp = resultado;
+            while(temp.length() > 0) {
+                string line = temp.substr(0, 50);
+                DrawText(line.c_str(), 260, y_pos, 20, TEXT_COLOR);
+                y_pos += 25;
+                if(temp.length() > 50)
+                    temp = temp.substr(50);
+                else
+                    break;
+            }
+            
+            DrawText("ENTER -> volver", 350, 540, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        DrawText("BACKSPACE -> volver", 20,20,18,TEXT_COLOR);
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      PAR O IMPAR
+// ======================================================
+void pantallaParImpar() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        DrawText("PAR O IMPAR", 360, 40, 34, ACCENT_COLOR);
+
+        if(input) {
+            DrawText("Ingresa un número:", 340, 130, 24, TEXT_COLOR);
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num.empty() && num != "-") {
+                try {
+                    int n = stoi(num);
+                    if(n % 2 == 0)
+                        resultado = "PAR";
+                    else
+                        resultado = "IMPAR";
+                        
+                    string h = num + " es " + resultado;
+                    historial.push_back(h);
+                }
+                catch(...) {
+                    resultado = "Error: número inválido";
+                }
+                
+                input = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            DrawText("El número", 300, 180, 26, ACCENT2_COLOR);
+            DrawText(num.c_str(), 420, 180, 26, TEXT_COLOR);
+            DrawText("es:", 480, 180, 26, ACCENT2_COLOR);
+            
+            Color colorResultado = (resultado == "PAR") ? VERDE_COLOR : PURPLE_COLOR;
+            DrawText(resultado.c_str(), 520, 180, 32, colorResultado);
+            
+            DrawText("ENTER -> volver", 350, 540, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        DrawText("BACKSPACE -> volver", 20,20,18,TEXT_COLOR);
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      FACTORIAL
+// ======================================================
+void pantallaFactorial() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        DrawText("FACTORIAL", 370, 40, 34, ACCENT_COLOR);
+
+        if(input) {
+            DrawText("Ingresa un número:", 340, 130, 24, TEXT_COLOR);
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(num.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(num,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num.empty() && num != "-") {
+                try {
+                    int n = stoi(num);
+                    if(n < 0) {
+                        resultado = "Error: no existe factorial de negativo";
+                    }
+                    else if(n > 20) {
+                        resultado = "Error: número muy grande (max 20)";
+                    }
+                    else {
+                        long long fact = 1;
+                        for(int i = 1; i <= n; i++) {
+                            fact *= i;
+                        }
+                        resultado = to_string(fact);
+                        
+                        string h = num + "! = " + resultado;
+                        historial.push_back(h);
+                    }
+                }
+                catch(...) {
+                    resultado = "Error: número inválido";
+                }
+                input = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            DrawText("Factorial de", 300, 180, 26, ACCENT2_COLOR);
+            DrawText(num.c_str(), 450, 180, 26, TEXT_COLOR);
+            DrawText("=", 500, 180, 26, ACCENT2_COLOR);
+            DrawText(resultado.c_str(), 530, 180, 26, VERDE2_COLOR);
+            
+            DrawText("ENTER -> volver", 350, 540, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        DrawText("BACKSPACE -> volver", 20,20,18,TEXT_COLOR);
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      POTENCIA
+// ======================================================
+void pantallaPotencia() {
+    string base = "", exponente = "";
+    bool input1 = true, input2 = false, done = false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        DrawText("POTENCIA", 370, 40, 34, ACCENT_COLOR);
+
+        if(input1) {
+            DrawText("Base:", 380, 130, 24, TEXT_COLOR);
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(base.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(base,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !base.empty() && base != "-") {
+                input1 = false;
+                input2 = true;
+            }
+        }
+        else if(input2) {
+            DrawText("Exponente:", 350, 130, 24, TEXT_COLOR);
+            DrawRectangle(260,200,380,60, Fade(ACCENT_COLOR,0.25f));
+            DrawRectangleLines(260,200,380,60, ACCENT2_COLOR);
+            DrawText(exponente.c_str(),280,220,28,TEXT_COLOR);
+
+            tecladoNumerico(exponente,300,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !exponente.empty() && exponente != "-") {
+                try {
+                    double b = stod(base);
+                    int exp = stoi(exponente);
+                    
+                    if(exp < 0) {
+                        resultado = "Error: exponente debe ser >= 0";
+                    }
+                    else if(exp > 1000) {
+                        resultado = "Error: exponente muy grande";
+                    }
+                    else {
+                        double potencia = pow(b, exp);
+                        char buf[64];
+                        sprintf(buf, "%.4f", potencia);
+                        resultado = buf;
+                        
+                        string h = base + "^" + exponente + " = " + buf;
+                        historial.push_back(h);
+                    }
+                }
+                catch(...) {
+                    resultado = "Error: números inválidos";
+                }
+                input2 = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            DrawText("Resultado:", 300, 200, 26, ACCENT2_COLOR);
+            DrawText(resultado.c_str(), 420, 200, 26, TEXT_COLOR);
+            DrawText("ENTER -> volver", 350, 540, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        DrawText("BACKSPACE -> volver", 20,20,18,TEXT_COLOR);
+        EndDrawing();
+    }
+}
+
+
+VERSION SPACE FINAL:
+
+/*******************************************************************************************
+    CALCULADORA MOYA – GUI RAYLIB - VERSIÓN MEJORADA VISUALMENTE
+    COMPLETA CON TODAS LAS FUNCIONES - MISMAS FUNCIONALIDADES, MEJOR ASPECTO
+********************************************************************************************/
+
+#include <raylib.h>
+#include <string>
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <cstdio>
+
+using namespace std;
+
+// ======================================================
+//      ESTRUCTURA PARA HISTORIAL
+// ======================================================
+vector<string> historial;
+string userName = "";
+
+// ======================================================
+//      DECLARACIÓN DE FUNCIONES
+// ======================================================
+void pantallaInicial();
+void pantallaSumarRestar();
+void pantallaMultiplicar();
+void pantallaDividir();
+void pantallaDistanciaPlanetas();
+void pantallaFibonacci();
+void pantallaParImpar();
+void pantallaFactorial();
+void pantallaPotencia();
+
+void tecladoNumerico(string &buffer, int x, int y);
+bool botonSimple(Rectangle r, const char *text);
+void dibujarFondoAnimado();
+void dibujarTarjetaConSombra(Rectangle rect, Color color, float redondeo = 0.1f);
+void dibujarTextoConSombra(const char* texto, int x, int y, int fontSize, Color color);
+
+// ======================================================
+//      PALETA DE COLORES MEJORADA
+// ======================================================
+const Color BG_COLOR = {18, 18, 18, 255};           // Fondo más oscuro para mejor contraste
+const Color ACCENT_COLOR = {100, 150, 255, 255};    // Azul más vibrante
+const Color ACCENT2_COLOR = {70, 120, 220, 255};    // Azul secundario
+const Color TEXT_COLOR = {240, 240, 240, 255};      // Texto casi blanco
+const Color VERDE_COLOR = {100, 220, 100, 255};     // Verde más brillante
+const Color VERDE2_COLOR = {80, 180, 80, 255};      // Verde secundario
+const Color NARANJA_COLOR = {255, 160, 40, 255};    // Naranja más cálido
+const Color PURPLE_COLOR = {180, 80, 220, 255};     // Púrpura más vibrante
+const Color WHITE_COLOR = {255, 255, 255, 255};
+const Color RED_COLOR = {255, 80, 80, 255};         // Rojo más suave
+const Color CARD_COLOR = {30, 30, 35, 255};         // Color para tarjetas
+
+// ======================================================
+//      OPCIONES MENÚ
+// ======================================================
+const char *menuItems[] = {
+    "1) Sumar / Restar",
+    "2) Multiplicar",
+    "3) Dividir",
+    "4) Distancia Planetas",
+    "5) Fibonacci",
+    "6) Par/Impar",
+    "7) Factorial",
+    "8) Potencia",
+    "9) Ver Historial",
+    "0) Salir"
+};
+int menuCount = 10;
+
+// ======================================================
+//      FUNCIÓN PRINCIPAL
+// ======================================================
+int main() {
+    InitWindow(900, 600, "Calculadora Moya GUI - Edición Mejorada");
+    SetTargetFPS(60);
+
+    pantallaInicial();
+
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+
+        dibujarFondoAnimado();
+
+        // Título principal con efectos mejorados
+        string titulo = "BIENVENIDO " + userName;
+        dibujarTextoConSombra(titulo.c_str(), (900 - MeasureText(titulo.c_str(), 36)) / 2, 40, 36, ACCENT_COLOR);
+
+        string version = "CALCULATOR V2.0 - SPACE EDITION";
+        dibujarTextoConSombra(version.c_str(), (900 - MeasureText(version.c_str(), 20)) / 2, 90, 20, Fade(ACCENT_COLOR, 0.8f));
+
+        // Marco principal mejorado
+        Rectangle marco = {150, 120, 600, 450};
+        dibujarTarjetaConSombra(marco, CARD_COLOR, 0.15f);
+
+        // Opciones del menú con efectos hover mejorados
+        int y = 150;
+        for(int i = 0; i < menuCount; i++) {
+            Rectangle opcionRect = {175, (float)(y-5), 550, 40};
+            bool overOpcion = CheckCollisionPointRec(GetMousePosition(), opcionRect);
+
+            if(overOpcion) {
+                DrawRectangleRounded(opcionRect, 0.3f, 8, Fade(VERDE_COLOR, 0.15f));
+                // Efecto de resaltado
+                DrawRectangleRoundedLinesEx(opcionRect, 0.3f, 8, 2, Fade(VERDE_COLOR, 0.6f));
+            }
+
+            // Icono decorativo
+            DrawCircle(190, y + 15, 4, overOpcion ? VERDE_COLOR : ACCENT_COLOR);
+            dibujarTextoConSombra(menuItems[i], 210, y, 24, overOpcion ? VERDE_COLOR : TEXT_COLOR);
+            y += 40;
+        }
+
+        dibujarTextoConSombra("Presiona una tecla (0-9) o haz clic en las opciones", 250, 540, 18, Fade(ACCENT_COLOR, 0.7f));
+
+        // Navegación por teclado (misma lógica)
+        if (IsKeyPressed(KEY_ONE)) pantallaSumarRestar();
+        if (IsKeyPressed(KEY_TWO)) pantallaMultiplicar();
+        if (IsKeyPressed(KEY_THREE)) pantallaDividir();
+        if (IsKeyPressed(KEY_FOUR)) pantallaDistanciaPlanetas();
+        if (IsKeyPressed(KEY_FIVE)) pantallaFibonacci();
+        if (IsKeyPressed(KEY_SIX)) pantallaParImpar();
+        if (IsKeyPressed(KEY_SEVEN)) pantallaFactorial();
+        if (IsKeyPressed(KEY_EIGHT)) pantallaPotencia();
+        if (IsKeyPressed(KEY_NINE)) {
+            while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+                BeginDrawing();
+                ClearBackground(BG_COLOR);
+                dibujarFondoAnimado();
+
+                dibujarTextoConSombra("HISTORIAL DE OPERACIONES", 280, 40, 34, ACCENT_COLOR);
+
+                Rectangle historialRect = {50, 100, 800, 450};
+                dibujarTarjetaConSombra(historialRect, CARD_COLOR, 0.1f);
+
+                int yy = 130;
+                for(string h : historial) {
+                    DrawText(h.c_str(), 70, yy, 20, TEXT_COLOR);
+                    yy += 25;
+                }
+
+                dibujarTextoConSombra("BACKSPACE -> volver al menu", 320, 570, 20, Fade(TEXT_COLOR, 0.7f));
+                EndDrawing();
+            }
+        }
+        if (IsKeyPressed(KEY_ZERO)) CloseWindow();
+
+        // Navegación por mouse (nueva funcionalidad)
+        for(int i = 0; i < menuCount; i++) {
+            Rectangle opcionRect = {175, (float)(150 + i*40 - 5), 550, 40};
+            if(CheckCollisionPointRec(GetMousePosition(), opcionRect) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                switch(i) {
+                    case 0: pantallaSumarRestar(); break;
+                    case 1: pantallaMultiplicar(); break;
+                    case 2: pantallaDividir(); break;
+                    case 3: pantallaDistanciaPlanetas(); break;
+                    case 4: pantallaFibonacci(); break;
+                    case 5: pantallaParImpar(); break;
+                    case 6: pantallaFactorial(); break;
+                    case 7: pantallaPotencia(); break;
+                    case 8: {
+                        while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+                            BeginDrawing();
+                            ClearBackground(BG_COLOR);
+                            dibujarFondoAnimado();
+
+                            dibujarTextoConSombra("HISTORIAL DE OPERACIONES", 280, 40, 34, ACCENT_COLOR);
+
+                            Rectangle historialRect = {50, 100, 800, 450};
+                            dibujarTarjetaConSombra(historialRect, CARD_COLOR, 0.1f);
+
+                            int yy = 130;
+                            for(string h : historial) {
+                                DrawText(h.c_str(), 70, yy, 20, TEXT_COLOR);
+                                yy += 25;
+                            }
+
+                            dibujarTextoConSombra("BACKSPACE -> volver al menu", 320, 570, 20, Fade(TEXT_COLOR, 0.7f));
+                            EndDrawing();
+                        }
+                    } break;
+                    case 9: CloseWindow(); break;
+                }
+            }
+        }
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+
+// ======================================================
+//      PANTALLA INICIAL MEJORADA
+// ======================================================
+void pantallaInicial() {
+    string nombre = "";
+    bool activo = true;
+    
+    while(activo && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        
+        // Fondo animado mejorado
+        dibujarFondoAnimado();
+        
+        // Título con gradiente simulado
+        dibujarTextoConSombra("CALCULADORA MOYA", 220, 80, 50, ACCENT_COLOR);
+        dibujarTextoConSombra("Por favor, ingresa tu nombre:", 260, 180, 28, TEXT_COLOR);
+        
+        // Campo de entrada mejorado
+        Rectangle campo = {150, 230, 600, 70};
+        dibujarTarjetaConSombra(campo, CARD_COLOR, 0.2f);
+        
+        // Efecto de focus
+        if(!nombre.empty()) {
+            DrawRectangleRoundedLinesEx(campo, 0.2f, 8, 3, VERDE_COLOR);
+        }
+        
+        DrawText(nombre.c_str(), 170, 250, 32, TEXT_COLOR);
+        
+        // Placeholder visual
+        if(nombre.empty()) {
+            DrawText("Escribe tu nombre aquí...", 170, 250, 32, Fade(TEXT_COLOR, 0.4f));
+        }
+        
+        // Botón continuar mejorado
+        Rectangle btnContinuar = {350, 330, 200, 70};
+        bool sobreBtn = CheckCollisionPointRec(GetMousePosition(), btnContinuar);
+        
+        if(botonSimple(btnContinuar, "CONTINUAR")) {
+            if(!nombre.empty()) {
+                userName = nombre;
+                activo = false;
+            }
+        }
+        
+        // Entrada de texto (misma lógica)
+        int key = GetCharPressed();
+        while (key > 0) {
+            if ((key >= 32) && (key <= 125) && (nombre.size() < 20)) {
+                nombre += (char)key;
+            }
+            key = GetCharPressed();
+        }
+        
+        if (IsKeyPressed(KEY_BACKSPACE) && !nombre.empty()) {
+            nombre.pop_back();
+        }
+        
+        // Confirmación (misma lógica)
+        if (IsKeyPressed(KEY_ENTER) && !nombre.empty()) {
+            userName = nombre;
+            activo = false;
+        }
+        
+        dibujarTextoConSombra("Presiona ENTER o haz clic en CONTINUAR", 260, 420, 20, Fade(TEXT_COLOR, 0.7f));
+        
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      FONDO ANIMADO MEJORADO
+// ======================================================
+void dibujarFondoAnimado() {
+    float tiempo = GetTime();
+    
+    // Capa 1: Partículas base
+    for(int i = 0; i < 30; i++) {
+        float x = 100 + (i * 35) + sin(tiempo * 0.7 + i * 0.4) * 40;
+        float y = 80 + cos(tiempo * 0.5 + i * 0.3) * 30;
+        float radio = 2 + sin(tiempo * 0.3 + i) * 1.5;
+        
+        Color particulaColor;
+        switch(i % 4) {
+            case 0: particulaColor = Fade(ACCENT_COLOR, 0.12f); break;
+            case 1: particulaColor = Fade(VERDE_COLOR, 0.1f); break;
+            case 2: particulaColor = Fade(PURPLE_COLOR, 0.08f); break;
+            default: particulaColor = Fade(NARANJA_COLOR, 0.09f); break;
+        }
+        
+        DrawCircle(x, y, radio, particulaColor);
+    }
+    
+    // Capa 2: Partículas grandes de fondo
+    for(int i = 0; i < 8; i++) {
+        float x = 200 + (i * 100) + cos(tiempo * 0.3 + i) * 60;
+        float y = 400 + sin(tiempo * 0.4 + i * 0.7) * 50;
+        float radio = 15 + sin(tiempo * 0.2 + i) * 5;
+        DrawCircleGradient(x, y, radio, Fade(ACCENT_COLOR, 0.03f), Fade(VERDE_COLOR, 0.01f));
+    }
+    
+    // Capa 3: Líneas de conexión
+    for(int i = 0; i < 12; i += 2) {
+        float x1 = 50 + (i * 80) + sin(tiempo * 0.6 + i) * 35;
+        float y1 = 100 + cos(tiempo * 0.5 + i) * 40;
+        float x2 = 50 + ((i+1) * 80) + sin(tiempo * 0.6 + (i+1)) * 35;
+        float y2 = 100 + cos(tiempo * 0.5 + (i+1)) * 40;
+        DrawLineEx({x1, y1}, {x2, y2}, 1.2f, Fade(ACCENT_COLOR, 0.06f));
+    }
+    
+    // Elementos decorativos en esquinas
+    DrawCircle(80, 80, 50, Fade(ACCENT_COLOR, 0.04f));
+    DrawCircle(820, 520, 70, Fade(VERDE_COLOR, 0.03f));
+    DrawCircle(750, 120, 45, Fade(PURPLE_COLOR, 0.05f));
+}
+
+// ======================================================
+//      BOTÓN SIMPLE MEJORADO
+// ======================================================
+bool botonSimple(Rectangle r, const char *text) {
+    bool over = CheckCollisionPointRec(GetMousePosition(), r);
+    Color colorBoton = over ? ACCENT2_COLOR : ACCENT_COLOR;
+    
+    // Efecto de elevación
+    float elevacion = over ? 2.0f : 0.0f;
+    Rectangle btnShadow = {r.x, r.y + 3, r.width, r.height};
+    
+    // Sombra
+    if(over) {
+        DrawRectangleRounded(btnShadow, 0.3f, 12, Fade(BLACK, 0.2f));
+    }
+    
+    // Botón principal
+    DrawRectangleRounded({r.x, r.y - elevacion, r.width, r.height}, 0.3f, 12, colorBoton);
+    
+    // Borde con efecto de brillo
+    DrawRectangleRoundedLinesEx({r.x, r.y - elevacion, r.width, r.height}, 0.3f, 12, 2, 
+                               over ? WHITE_COLOR : Fade(WHITE_COLOR, 0.7f));
+    
+    // Texto con efecto de sombra
+    int textWidth = MeasureText(text, 26);
+    dibujarTextoConSombra(text, r.x + (r.width - textWidth)/2, r.y - elevacion + 17, 26, WHITE_COLOR);
+    
+    return (over && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+}
+
+// ======================================================
+//      TARJETA CON SOMBRA (NUEVA FUNCIÓN)
+// ======================================================
+void dibujarTarjetaConSombra(Rectangle rect, Color color, float redondeo) {
+    // Sombra
+    Rectangle shadowRect = {rect.x + 4, rect.y + 4, rect.width, rect.height};
+    DrawRectangleRounded(shadowRect, redondeo, 12, Fade(BLACK, 0.15f));
+    
+    // Tarjeta principal
+    DrawRectangleRounded(rect, redondeo, 12, color);
+    DrawRectangleRoundedLinesEx(rect, redondeo, 12, 2, Fade(WHITE_COLOR, 0.1f));
+}
+
+// ======================================================
+//      TEXTO CON SOMBRA (NUEVA FUNCIÓN)
+// ======================================================
+void dibujarTextoConSombra(const char* texto, int x, int y, int fontSize, Color color) {
+    DrawText(texto, x + 1, y + 1, fontSize, Fade(BLACK, 0.3f));
+    DrawText(texto, x, y, fontSize, color);
+}
+
+// ======================================================
+//      TECLADO NUMÉRICO MEJORADO
+// ======================================================
+void tecladoNumerico(string &buffer, int x, int y) {
+    const char *nums[9] = {"1","2","3","4","5","6","7","8","9"};
+    int idx = 0;
+
+    for(int j=0;j<3;j++) {
+        for(int i=0;i<3;i++) {
+            Rectangle r = { (float)(x + i*85), (float)(y + j*75), 75,65 };
+            bool over = CheckCollisionPointRec(GetMousePosition(), r);
+            Color colorBoton = over ? Fade(ACCENT2_COLOR,0.9f) : Fade(ACCENT_COLOR,0.7f);
+            
+            // Sombra del botón
+            if(over) {
+                DrawRectangleRounded({r.x, r.y+3, r.width, r.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+            }
+            
+            // Botón principal
+            float elevacion = over ? 2.0f : 0.0f;
+            DrawRectangleRounded({r.x, r.y - elevacion, r.width, r.height}, 0.3f, 8, colorBoton);
+            DrawRectangleRoundedLinesEx({r.x, r.y - elevacion, r.width, r.height}, 0.3f, 8, 2, 
+                                       over ? WHITE_COLOR : Fade(WHITE_COLOR, 0.6f));
+            
+            // Texto del número
+            dibujarTextoConSombra(nums[idx], r.x+28, r.y - elevacion + 18, 28, WHITE_COLOR);
+
+            if(over && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                buffer += nums[idx];
+
+            idx++;
+        }
+    }
+
+    // Fila inferior: Cero, negativo y borrar
+    // Cero
+    Rectangle r0 = { (float)x+85, (float)(y+3*75), 75,65 };
+    bool over0 = CheckCollisionPointRec(GetMousePosition(), r0);
+    Color colorBoton0 = over0 ? Fade(ACCENT2_COLOR,0.9f) : Fade(ACCENT_COLOR,0.7f);
+    
+    if(over0) DrawRectangleRounded({r0.x, r0.y+3, r0.width, r0.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+    float elevacion0 = over0 ? 2.0f : 0.0f;
+    DrawRectangleRounded({r0.x, r0.y - elevacion0, r0.width, r0.height}, 0.3f, 8, colorBoton0);
+    DrawRectangleRoundedLinesEx({r0.x, r0.y - elevacion0, r0.width, r0.height}, 0.3f, 8, 2, over0 ? WHITE_COLOR : Fade(WHITE_COLOR, 0.6f));
+    dibujarTextoConSombra("0", r0.x+28, r0.y - elevacion0 + 18, 28, WHITE_COLOR);
+    if(over0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) buffer += "0";
+
+    // Signo negativo
+    Rectangle rNeg = { (float)x+170, (float)(y+3*75), 75,65 };
+    bool overNeg = CheckCollisionPointRec(GetMousePosition(), rNeg);
+    Color colorBotonNeg = overNeg ? Fade(NARANJA_COLOR,0.9f) : Fade(NARANJA_COLOR,0.7f);
+    
+    if(overNeg) DrawRectangleRounded({rNeg.x, rNeg.y+3, rNeg.width, rNeg.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+    float elevacionNeg = overNeg ? 2.0f : 0.0f;
+    DrawRectangleRounded({rNeg.x, rNeg.y - elevacionNeg, rNeg.width, rNeg.height}, 0.3f, 8, colorBotonNeg);
+    DrawRectangleRoundedLinesEx({rNeg.x, rNeg.y - elevacionNeg, rNeg.width, rNeg.height}, 0.3f, 8, 2, overNeg ? WHITE_COLOR : Fade(WHITE_COLOR, 0.6f));
+    dibujarTextoConSombra("-", rNeg.x+28, rNeg.y - elevacionNeg + 18, 28, WHITE_COLOR);
+    if(overNeg && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if(buffer.empty() || (buffer.length() > 0 && buffer[0] != '-'))
+            buffer = "-" + buffer;
+    }
+
+    // Borrar
+    Rectangle rb = { (float)x, (float)(y+3*75), 75,65 };
+    bool overB = CheckCollisionPointRec(GetMousePosition(), rb);
+    Color colorBotonB = overB ? Fade(ACCENT2_COLOR,0.9f) : Fade(RED_COLOR,0.7f);
+    
+    if(overB) DrawRectangleRounded({rb.x, rb.y+3, rb.width, rb.height}, 0.3f, 8, Fade(BLACK, 0.2f));
+    float elevacionB = overB ? 2.0f : 0.0f;
+    DrawRectangleRounded({rb.x, rb.y - elevacionB, rb.width, rb.height}, 0.3f, 8, colorBotonB);
+    DrawRectangleRoundedLinesEx({rb.x, rb.y - elevacionB, rb.width, rb.height}, 0.3f, 8, 2, overB ? WHITE_COLOR : Fade(WHITE_COLOR, 0.6f));
+    dibujarTextoConSombra("←", rb.x+25, rb.y - elevacionB + 18, 28, WHITE_COLOR);
+    if(overB && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        if(!buffer.empty()) buffer.pop_back();
+}
+
+// ======================================================
+//      SUMA / RESTA (MISMA LÓGICA, MEJOR VISUAL)
+// ======================================================
+void pantallaSumarRestar() {
+    string op = "";
+    string num1 = "", num2 = "";
+    bool choose = true, input1=false, input2=false, done=false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+
+        dibujarTextoConSombra("SUMAR / RESTAR", 310, 40, 34, ACCENT_COLOR);
+
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, CARD_COLOR, 0.1f);
+
+        if(choose) {
+            dibujarTextoConSombra("Elige operación:", 350, 150, 24, TEXT_COLOR);
+
+            Rectangle addR = {300,220,140,70};
+            Rectangle resR = {460,220,140,70};
+
+            if (botonSimple(addR, "SUMA (+)")) { op = "+"; choose=false; input1=true; }
+            if (botonSimple(resR, "RESTA (-)")) { op = "-"; choose=false; input1=true; }
+        }
+        else if(input1) {
+            dibujarTextoConSombra("Primer número:", 350, 150, 24, TEXT_COLOR);
+
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num1.c_str(), 220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num1, 250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num1.empty() && num1 != "-") {
+                input1=false;
+                input2=true;
+            }
+        }
+        else if(input2) {
+            dibujarTextoConSombra("Segundo número:", 350, 150, 24, TEXT_COLOR);
+
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num2.c_str(), 220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num2, 250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num2.empty() && num2 != "-") {
+                float a = stof(num1);
+                float b = stof(num2);
+                float r = (op == "+") ? a+b : a-b;
+
+                char buf[64];
+                sprintf(buf,"%.4f",r);
+                resultado = buf;
+
+                string h = num1 + " " + op + " " + num2 + " = " + buf;
+                historial.push_back(h);
+
+                input2 = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            dibujarTextoConSombra("Resultado:", 300, 220, 26, ACCENT2_COLOR);
+            dibujarTextoConSombra(resultado.c_str(), 420, 220, 26, VERDE_COLOR);
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        dibujarTextoConSombra("BACKSPACE -> volver", 20, 20, 18, Fade(TEXT_COLOR, 0.7f));
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      MULTIPLICAR (MISMA LÓGICA, MEJOR VISUAL)
+// ======================================================
+void pantallaMultiplicar() {
+    string num1="", num2="";
+    bool input1=true, input2=false, done=false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        dibujarTextoConSombra("MULTIPLICAR", 350, 40, 34, ACCENT_COLOR);
+
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, CARD_COLOR, 0.1f);
+
+        if(input1) {
+            dibujarTextoConSombra("Primer número:", 350, 150, 24, TEXT_COLOR);
+
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num1.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num1,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num1.empty() && num1 != "-") {
+                input1=false;
+                input2=true;
+            }
+        }
+        else if(input2) {
+            dibujarTextoConSombra("Segundo número:", 350, 150, 24, TEXT_COLOR);
+
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num2.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num2,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num2.empty() && num2 != "-") {
+                float a = stof(num1);
+                float b = stof(num2);
+                float r = a*b;
+
+                char buf[64];
+                sprintf(buf,"%.4f", r);
+                resultado = buf;
+
+                string h = num1 + " * " + num2 + " = " + buf;
+                historial.push_back(h);
+
+                input2 = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            dibujarTextoConSombra("Resultado:", 300, 220, 26, ACCENT2_COLOR);
+            dibujarTextoConSombra(resultado.c_str(), 420, 220, 26, VERDE_COLOR);
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(TEXT_COLOR, 0.7f));
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      DIVIDIR (MISMA LÓGICA, MEJOR VISUAL)
+// ======================================================
+void pantallaDividir() {
+    string num1="", num2="";
+    bool input1=true, input2=false, done=false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        dibujarTextoConSombra("DIVIDIR", 390, 40, 34, ACCENT_COLOR);
+
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, CARD_COLOR, 0.1f);
+
+        if(input1) {
+            dibujarTextoConSombra("Dividendo:", 350, 150, 24, TEXT_COLOR);
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num1.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num1,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num1.empty() && num1 != "-") {
+                input1=false;
+                input2=true;
+            }
+        }
+        else if(input2) {
+            dibujarTextoConSombra("Divisor:", 350, 150, 24, TEXT_COLOR);
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num2.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num2,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num2.empty() && num2 != "-") {
+                float a=stof(num1), b=stof(num2);
+                if(b==0) {
+                    resultado = "ERROR: División por cero";
+                }
+                else {
+                    float r=a/b;
+                    char buf[64];
+                    sprintf(buf,"%.4f",r);
+                    resultado = buf;
+
+                    string h = num1 + " / " + num2 + " = " + buf;
+                    historial.push_back(h);
+                }
+                input2 = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            dibujarTextoConSombra("Resultado:", 300, 220, 26, ACCENT2_COLOR);
+            if(resultado.find("ERROR") != string::npos) {
+                dibujarTextoConSombra(resultado.c_str(), 300, 250, 24, RED_COLOR);
+            } else {
+                dibujarTextoConSombra(resultado.c_str(), 420, 220, 26, VERDE_COLOR);
+            }
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(TEXT_COLOR, 0.7f));
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      DISTANCIAS PLANETAS (MISMA LÓGICA, MEJOR VISUAL)
+// ======================================================
+void pantallaDistanciaPlanetas() {
+    struct Planet { string name; float dist; };
+    vector<Planet> P = {
+        {"Sol",       149.6f},
+        {"Mercurio",   91.7f},
+        {"Venus",      41.4f},
+        {"Marte",      78.3f},
+        {"Jupiter",  628.7f},
+        {"Saturno", 1275.0f},
+        {"Urano",   2723.0f},
+        {"Neptuno", 4351.0f}
+    };
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+
+        dibujarTextoConSombra("Distancia desde la Tierra (millones km)", 140, 40, 28, ACCENT_COLOR);
+
+        Rectangle contenido = {80, 100, 740, 450};
+        dibujarTarjetaConSombra(contenido, CARD_COLOR, 0.1f);
+
+        int y = 140;
+        for(auto &p : P) {
+            char buf[64];
+            sprintf(buf,"%.1f", p.dist);
+
+            // Icono decorativo
+            DrawCircle(120, y + 15, 4, ACCENT_COLOR);
+            
+            DrawText(p.name.c_str(), 140, y, 26, TEXT_COLOR);
+            DrawText(buf,           500, y, 26, VERDE_COLOR);
+            
+            // Barra visual de distancia
+            float barWidth = (p.dist / 4351.0f) * 150.0f;
+            DrawRectangle(650, y + 10, (int)barWidth, 8, Fade(ACCENT_COLOR, 0.6f));
+            
+            y += 50;
+        }
+
+        dibujarTextoConSombra("BACKSPACE -> volver", 20, 20, 18, Fade(TEXT_COLOR, 0.7f));
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      FIBONACCI (MISMA LÓGICA, MEJOR VISUAL)
+// ======================================================
+void pantallaFibonacci() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        dibujarTextoConSombra("SECUENCIA FIBONACCI", 300, 40, 34, ACCENT_COLOR);
+
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, CARD_COLOR, 0.1f);
+
+        if(input) {
+            dibujarTextoConSombra("Número de términos:", 330, 150, 24, TEXT_COLOR);
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num.empty() && num != "-") {
+                int n = stoi(num);
+                if(n <= 0) {
+                    resultado = "Error: debe ser > 0";
+                }
+                else if(n > 50) {
+                    resultado = "Error: máximo 50 términos";
+                }
+                else {
+                    string fib_seq = "";
+                    long long a = 0, b = 1;
+                    
+                    for(int i = 0; i < n; i++) {
+                        fib_seq += to_string(a);
+                        if(i < n-1) fib_seq += ", ";
+                        
+                        long long temp = a + b;
+                        a = b;
+                        b = temp;
+                    }
+                    
+                    resultado = fib_seq;
+                    string h = "Fibonacci(" + num + ") = " + fib_seq.substr(0, 40) + "...";
+                    historial.push_back(h);
+                }
+                input = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            dibujarTextoConSombra("Secuencia Fibonacci:", 300, 130, 24, ACCENT2_COLOR);
+            
+            int y_pos = 180;
+            string temp = resultado;
+            while(temp.length() > 0) {
+                string line = temp.substr(0, 50);
+                DrawText(line.c_str(), 160, y_pos, 20, TEXT_COLOR);
+                y_pos += 25;
+                if(temp.length() > 50)
+                    temp = temp.substr(50);
+                else
+                    break;
+            }
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 400, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(TEXT_COLOR, 0.7f));
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      PAR O IMPAR (MISMA LÓGICA, MEJOR VISUAL)
+// ======================================================
+void pantallaParImpar() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        dibujarTextoConSombra("PAR O IMPAR", 360, 40, 34, ACCENT_COLOR);
+
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, CARD_COLOR, 0.1f);
+
+        if(input) {
+            dibujarTextoConSombra("Ingresa un número:", 340, 150, 24, TEXT_COLOR);
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num.empty() && num != "-") {
+                try {
+                    int n = stoi(num);
+                    if(n % 2 == 0)
+                        resultado = "PAR";
+                    else
+                        resultado = "IMPAR";
+                        
+                    string h = num + " es " + resultado;
+                    historial.push_back(h);
+                }
+                catch(...) {
+                    resultado = "Error: número inválido";
+                }
+                
+                input = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            dibujarTextoConSombra("El número", 300, 180, 26, ACCENT2_COLOR);
+            dibujarTextoConSombra(num.c_str(), 420, 180, 26, TEXT_COLOR);
+            dibujarTextoConSombra("es:", 480, 180, 26, ACCENT2_COLOR);
+            
+            Color colorResultado = (resultado == "PAR") ? VERDE_COLOR : PURPLE_COLOR;
+            dibujarTextoConSombra(resultado.c_str(), 520, 180, 32, colorResultado);
+            
+            // Icono decorativo
+            if(resultado == "PAR") {
+                DrawCircle(350, 250, 40, Fade(VERDE_COLOR, 0.2f));
+                DrawCircleLines(350, 250, 40, VERDE_COLOR);
+            } else {
+                DrawRectangle(310, 210, 80, 80, Fade(PURPLE_COLOR, 0.2f));
+                DrawRectangleLines(310, 210, 80, 80, PURPLE_COLOR);
+            }
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(TEXT_COLOR, 0.7f));
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      FACTORIAL (MISMA LÓGICA, MEJOR VISUAL)
+// ======================================================
+void pantallaFactorial() {
+    string num = "";
+    bool input = true, done = false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        dibujarTextoConSombra("FACTORIAL", 370, 40, 34, ACCENT_COLOR);
+
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, CARD_COLOR, 0.1f);
+
+        if(input) {
+            dibujarTextoConSombra("Ingresa un número:", 340, 150, 24, TEXT_COLOR);
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(num.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(num,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !num.empty() && num != "-") {
+                try {
+                    int n = stoi(num);
+                    if(n < 0) {
+                        resultado = "Error: no existe factorial de negativo";
+                    }
+                    else if(n > 20) {
+                        resultado = "Error: número muy grande (max 20)";
+                    }
+                    else {
+                        long long fact = 1;
+                        for(int i = 1; i <= n; i++) {
+                            fact *= i;
+                        }
+                        resultado = to_string(fact);
+                        
+                        string h = num + "! = " + resultado;
+                        historial.push_back(h);
+                    }
+                }
+                catch(...) {
+                    resultado = "Error: número inválido";
+                }
+                input = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            dibujarTextoConSombra("Factorial de", 300, 180, 26, ACCENT2_COLOR);
+            dibujarTextoConSombra(num.c_str(), 450, 180, 26, TEXT_COLOR);
+            dibujarTextoConSombra("=", 500, 180, 26, ACCENT2_COLOR);
+            dibujarTextoConSombra(resultado.c_str(), 530, 180, 26, VERDE2_COLOR);
+            
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(TEXT_COLOR, 0.7f));
+        EndDrawing();
+    }
+}
+
+// ======================================================
+//      POTENCIA (MISMA LÓGICA, MEJOR VISUAL)
+// ======================================================
+void pantallaPotencia() {
+    string base = "", exponente = "";
+    bool input1 = true, input2 = false, done = false;
+    string resultado = "";
+
+    while(!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(BG_COLOR);
+        dibujarFondoAnimado();
+        
+        dibujarTextoConSombra("POTENCIA", 370, 40, 34, ACCENT_COLOR);
+
+        Rectangle contenido = {100, 100, 700, 450};
+        dibujarTarjetaConSombra(contenido, CARD_COLOR, 0.1f);
+
+        if(input1) {
+            dibujarTextoConSombra("Base:", 380, 150, 24, TEXT_COLOR);
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(base.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(base,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !base.empty() && base != "-") {
+                input1 = false;
+                input2 = true;
+            }
+        }
+        else if(input2) {
+            dibujarTextoConSombra("Exponente:", 350, 150, 24, TEXT_COLOR);
+            Rectangle campo = {200,200,500,70};
+            dibujarTarjetaConSombra(campo, Fade(ACCENT_COLOR,0.1f), 0.1f);
+            DrawText(exponente.c_str(),220,220,32,TEXT_COLOR);
+
+            tecladoNumerico(exponente,250,300);
+
+            if(IsKeyPressed(KEY_ENTER) && !exponente.empty() && exponente != "-") {
+                try {
+                    double b = stod(base);
+                    int exp = stoi(exponente);
+                    
+                    if(exp < 0) {
+                        resultado = "Error: exponente debe ser >= 0";
+                    }
+                    else if(exp > 1000) {
+                        resultado = "Error: exponente muy grande";
+                    }
+                    else {
+                        double potencia = pow(b, exp);
+                        char buf[64];
+                        sprintf(buf, "%.4f", potencia);
+                        resultado = buf;
+                        
+                        string h = base + "^" + exponente + " = " + buf;
+                        historial.push_back(h);
+                    }
+                }
+                catch(...) {
+                    resultado = "Error: números inválidos";
+                }
+                input2 = false;
+                done = true;
+            }
+        }
+        else if(done) {
+            dibujarTextoConSombra("Resultado:", 300, 220, 26, ACCENT2_COLOR);
+            dibujarTextoConSombra(resultado.c_str(), 420, 220, 26, VERDE_COLOR);
+            dibujarTextoConSombra("ENTER -> volver", 350, 350, 26, ACCENT_COLOR);
+            if(IsKeyPressed(KEY_ENTER)) return;
+        }
+
+        dibujarTextoConSombra("BACKSPACE -> volver", 20,20,18, Fade(TEXT_COLOR, 0.7f));
+        EndDrawing();
+    }
+}

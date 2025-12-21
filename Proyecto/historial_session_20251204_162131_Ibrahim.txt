@@ -1,0 +1,5 @@
+(session file: historial_session_20251204_162131_Ibrahim.txt)
+25 + 36 = 61.0000
+25 x 36 = 900.0000
+2! = 2
+Fibonacci(2) = 0, 1

@@ -1,0 +1,532 @@
+json raylib: g++ main.cpp -o programa.exe -I"C:\raylib\include" -L"C:\raylib\lib" -lraylib -lopengl32 -lgdi32 -lwinmm
+
+ruta: cd /c/Users/saezi/Desktop/Proyecto
+
+main v1:
+#include <raylib.h>
+#include <string>
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// ===============================
+//  PROTOTIPOS
+// ===============================
+void pantallaSumarRestar();
+void pantallaMultiplicar();
+void pantallaDividir();
+void pantallaFactorial();
+void pantallaFibonacci();
+void pantallaNumeroPrimo();
+void pantallaParImpar();
+void pantallaPotencia();
+void pantallaProbabilidad();
+void pantallaDistanciaPlanetas();
+
+
+// Opciones del menú
+const char *menuItems[] = {
+    "1) Sumar / Restar",
+    "2) Multiplicar",
+    "3) Dividir",
+    "4) Factorial",
+    "5) Fibonacci",
+    "6) Numero primo",
+    "7) Par o Impar",
+    "8) Potencia",
+    "9) Probabilidad",
+    "10) Distancia planetas",
+    "11) Salir"
+};
+
+int menuCount = 11;
+
+int main() {
+
+    // Crear ventana
+    InitWindow(800, 600, "Calculadora Moya - Raylib");
+    SetTargetFPS(60);
+
+    string nombreUsuario = "";
+    bool nombreIngresado = false;
+
+    while (!WindowShouldClose()) {
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        // ==========================
+        //  PANTALLA INGRESAR NOMBRE
+        // ==========================
+        if (!nombreIngresado) {
+
+            DrawText("Bienvenido!", 340, 80, 30, DARKBLUE);
+            DrawText("Ingresa tu nombre y presiona ENTER:", 180, 200, 20, BLACK);
+
+            DrawRectangle(180, 250, 450, 40, LIGHTGRAY);
+            DrawText(nombreUsuario.c_str(), 190, 260, 20, BLACK);
+
+            int key = GetCharPressed();
+            while (key > 0) {
+                if (key >= 32 && key <= 125) {
+                    nombreUsuario.push_back((char)key);
+                }
+                key = GetCharPressed();
+            }
+            if (IsKeyPressed(KEY_BACKSPACE) && nombreUsuario.length() > 0) {
+                nombreUsuario.pop_back();
+            }
+            if (IsKeyPressed(KEY_ENTER) && nombreUsuario.length() > 0) {
+                nombreIngresado = true;
+            }
+        }
+
+        // ==========================
+        //  MENÚ PRINCIPAL
+        // ==========================
+        else {
+
+            string saludo = "Hola, " + nombreUsuario + "! Selecciona una opcion:";
+            DrawText(saludo.c_str(), 200, 50, 25, DARKGREEN);
+
+            int startY = 120;
+            for (int i = 0; i < menuCount; i++) {
+                DrawText(menuItems[i], 280, startY + (i * 35), 20, BLACK);
+            }
+
+            DrawText("Presiona una tecla del 1 al 11", 250, 560, 20, GRAY);
+
+            // DETECTAR OPCIÓN
+            if (IsKeyPressed(KEY_ONE))      pantallaSumarRestar();
+            if (IsKeyPressed(KEY_TWO))      pantallaMultiplicar();
+            if (IsKeyPressed(KEY_THREE))    pantallaDividir();
+            if (IsKeyPressed(KEY_FOUR))     pantallaFactorial();
+            if (IsKeyPressed(KEY_FIVE))     pantallaFibonacci();
+            if (IsKeyPressed(KEY_SIX))      pantallaNumeroPrimo();
+            if (IsKeyPressed(KEY_SEVEN))    pantallaParImpar();
+            if (IsKeyPressed(KEY_EIGHT))    pantallaPotencia();
+            if (IsKeyPressed(KEY_NINE))     pantallaProbabilidad();
+            if (IsKeyPressed(KEY_ZERO))     pantallaDistanciaPlanetas();   // TEMPORAL (10)
+            if (IsKeyPressed(KEY_MINUS))    CloseWindow();                 // TEMPORAL (11)
+
+        }
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+
+
+// =====================================
+//   FUNCIONES DE CADA OPCIÓN
+//   (Pantallas independientes)
+// =====================================
+
+void pantallaSumarRestar() {
+
+    string numeroActual = "";
+    string numero1 = "";
+    string numero2 = "";
+    bool ingresandoPrimero = true;
+    bool resultadoListo = false;
+    float resultado = 0;
+
+    vector<string> historial;
+
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+
+        // Entrada de dígitos
+        int key = GetCharPressed();
+        while (key > 0) {
+            if (key >= '0' && key <= '9') {
+                numeroActual.push_back((char)key);
+            }
+            key = GetCharPressed();
+        }
+
+        // Borrar un dígito
+        if (IsKeyPressed(KEY_BACKSPACE) && numeroActual.length() > 0) {
+            numeroActual.pop_back();
+        }
+
+        // Cuando el usuario presiona ENTER, confirma número
+        if (IsKeyPressed(KEY_ENTER) && numeroActual.length() > 0) {
+
+            if (ingresandoPrimero) {
+                numero1 = numeroActual;
+                numeroActual = "";
+                ingresandoPrimero = false;
+            } else {
+                numero2 = numeroActual;
+                numeroActual = "";
+                resultadoListo = false;
+            }
+        }
+
+        // SUMAR → tecla S
+        if (IsKeyPressed(KEY_S) && numero1 != "" && numero2 != "") {
+            resultado = stof(numero1) + stof(numero2);
+            resultadoListo = true;
+            historial.push_back(numero1 + " + " + numero2 + " = " + to_string(resultado));
+        }
+
+        // RESTAR → tecla R
+        if (IsKeyPressed(KEY_R) && numero1 != "" && numero2 != "") {
+            resultado = stof(numero1) - stof(numero2);
+            resultadoListo = true;
+            historial.push_back(numero1 + " - " + numero2 + " = " + to_string(resultado));
+        }
+
+        // ===================== DIBUJO =====================
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+
+        DrawText("SUMAR / RESTAR", 260, 20, 30, BLUE);
+        DrawText("BACKSPACE = volver al menu", 10, 560, 20, RED);
+
+        if (ingresandoPrimero)
+            DrawText("Ingresa PRIMER numero:", 50, 100, 20, BLACK);
+        else
+            DrawText("Ingresa SEGUNDO numero:", 50, 100, 20, BLACK);
+
+        DrawText(numeroActual.c_str(), 50, 140, 30, DARKBLUE);
+
+        if (numero1 != "")
+            DrawText(("Numero 1: " + numero1).c_str(), 50, 200, 20, BLACK);
+        if (numero2 != "")
+            DrawText(("Numero 2: " + numero2).c_str(), 50, 230, 20, BLACK);
+
+        DrawText("S = Sumar   |   R = Restar   |   ENTER = Confirmar numero", 50, 300, 20, DARKGRAY);
+
+        if (resultadoListo) {
+            DrawText(("RESULTADO: " + to_string(resultado)).c_str(), 50, 350, 28, RED);
+        }
+
+        // HISTORIAL
+        DrawText("Historial:", 500, 100, 22, BLACK);
+        int y = 130;
+        for (int i = max(0, (int)historial.size() - 10); i < historial.size(); i++) {
+            DrawText(historial[i].c_str(), 500, y, 18, DARKGREEN);
+            y += 22;
+        }
+
+        EndDrawing();
+    }
+}
+
+
+void pantallaMultiplicar() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: MULTIPLICAR", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaDividir() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: DIVIDIR", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaFactorial() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: FACTORIAL", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaFibonacci() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: FIBONACCI", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaNumeroPrimo() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: NUMERO PRIMO", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaParImpar() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: PAR / IMPAR", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaPotencia() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: POTENCIA", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaProbabilidad() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: PROBABILIDAD", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+void pantallaDistanciaPlanetas() {
+    while (!IsKeyPressed(KEY_BACKSPACE) && !WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(LIGHTGRAY);
+        DrawText("Pantalla: DISTANCIA PLANETAS", 200, 200, 30, BLUE);
+        DrawText("Presiona BACKSPACE para volver", 200, 300, 20, RED);
+        EndDrawing();
+    }
+}
+
+
+
+
+Efecto “Break / Click Feedback”
+
+Idea: Cuando se haga clic en un botón, el botón podría “romperse”, oscurecerse o parpadear por un instante.
+
+✅ Por qué es útil:
+
+Mejora la respuesta visual
+
+Le da sensación de interacción real
+
+✅ Cómo hacerlo:
+
+Cambiar el color del botón durante unos frames al hacer clic.
+
+🔹 2) Animación de botones al pasar el mouse
+
+Idea: Añadir efectos:
+
+Escala (agrandarse 4–10%)
+
+Glow (resplandor)
+
+Bordes dinámicos
+
+Sombras suaves
+
+✅ Por qué:
+
+Hace que la UI sea más agradable y moderna.
+
+🔹 3) Fondo animado mejorado
+
+Lo actual está bien, pero podrías añadir:
+
+✨ Ideas:
+
+Degradientes en movimiento
+
+Partículas dinámicas siguiendo el mouse
+
+Ondas suaves
+
+Líneas geométricas rotando
+
+Efecto “espacio / galaxia”
+
+✅ Por qué:
+
+Más atractivo
+
+Sensación viva
+
+Mantiene la interfaz moderna
+
+🔹 4) Tema de colores ampliado
+
+Ahora usas azules y verdes principalmente.
+Puedes agregar:
+
+🎨 Paleta propuesta:
+
+Morado → para botones secundarios
+
+Naranja → advertencias
+
+Verde → confirmaciones
+
+Amarillo → cálculos recientes
+
+Degradientes entre tonos
+
+✅ Por qué:
+
+Más contraste
+
+Más personalidad
+
+🔹 5) Transiciones entre pantallas
+
+Ej.:
+
+Fade in/out
+
+Slide horizontal
+
+Zoom sobre el frame
+
+✅ Por qué:
+Mejora fluidez visual, más profesional.
+
+🔹 6) Sonidos SFX
+
+Click de botones
+
+Al completar una operación
+
+Error al dividir entre cero
+
+Sonido suave al abrir un menú
+
+✅ Por qué:
+Aumenta la percepción de interacción física.
+
+🔹 7) Historial mejorado
+
+Actualmente solo imprime texto.
+Podrías agregar:
+
+📌 Ideas:
+
+Scroll (si hay muchos datos)
+
+Botón de limpiar historial
+
+.
+
+🔹 8) Agregar modo oscuro
+
+Switch que invierta los colores principales.
+BG → negro
+Texto → blanco
+Botones → tonos brillantes
+
+✅ Por qué:
+
+Menos fatiga visual
+
+Se siente más moderno
+
+🔹 9) Validación visual de errores
+
+Ejemplo: división entre cero → pantalla roja con un icono ⚠️
+
+✅ Por qué:
+Comunica mejor el problema.
+
+🔹 10) Tipografías personalizadas
+
+Temas:
+
+Futurista
+
+Matemática
+
+Elegante
+
+✅ Por qué:
+Define identidad visual.
+
+🔹 11) Efecto de rebote al abrir teclado numérico
+
+Ej.:
+Cuando aparece el teclado numérico, que esté:
+
+Escalado 0.7
+
+Bounce-in → escala hasta 1.0
+
+✅ Por qué:
+Más dinámico, más “app moderna”.
+
+🔹 12) Ingreso mixto (Teclado + Mouse)
+
+Ahora solo numpad visual → permitir:
+
+Teclado real número
+
+Delete por tecla real
+
+Enter → confirmar
+
+✅ Por qué:
+Más rápido para usuarios reales.
+
+🔹 13) Fade visual en datos calculados
+
+Cuando aparece el resultado:
+
+Texto entra con fade o con “typing animation”
+
+✅ Por qué:
+Más suave y satisfactorio.
+
+🔹 14) Añadir más operaciones
+
+Logaritmos
+
+Raíz cuadrada / n
+
+Trigonometría
+
+Conversión unidades
+
+✅ Por qué:
+Más completa.
+
+🔹 15) Diseño adaptable (resizable)
+
+Si cambias tamaño de ventana → la UI se reajusta.
+
+✅ Por qué:
+Más accesible en diferentes pantallas.
+
+🔹 16) Icono cargado desde archivo
+
+En lugar del ícono por defecto, asignar uno propio.
+
+✅ Por qué:
+Identidad visual.
+
+🔹 17) Animación mínima de “idle”
+
+Si usuario no hace nada:
+
+Los botones brillan
+
+Fondo “respira”
+
+✅ Por qué:
+Da vida a la interfaz.
