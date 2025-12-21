@@ -1,0 +1,11 @@
+- [x] Modify result display positions in all calculator options to add separation (change y from 180/200 to 200/220)
+- [x] Enhance dibujarFondoAnimado with animated mathematical shapes (rectangles, triangles)
+  - [x] Fix grid lines misalignment in rotated rectangles
+  - [x] Increase visibility of shapes (alpha values)
+  - [x] Add boundary checks for shapes
+  - [x] Add animated circles representing mathematical constants (π, e, φ)
+  - [x] Add spirals representing logarithmic/exponential growth
+  - [x] Add hexagons and other polygons with complex rotations
+  - [x] Add scaling animations and color transitions
+  - [x] Add wave-pattern movements
+  - [x] Add fractal-like patterns with recursive scaling

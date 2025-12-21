@@ -1,0 +1,41 @@
+void inicializarRecursos() {
+    // Verificar que el dispositivo de audio esté listo
+    if (!IsAudioDeviceReady()) {
+        TraceLog(LOG_WARNING, "Dispositivo de audio no disponible");
+        return;
+    }
+    
+    // Cargar sonidos con rutas relativas
+    clickSound = LoadSound("assets/sounds/click_space.wav");
+    beepSound = LoadSound("assets/sounds/beep_space.wav");
+    successSound = LoadSound("assets/sounds/success_space.wav");
+    errorSound = LoadSound("assets/sounds/error_space.wav");
+    
+    // Verificar carga de sonidos
+    if (!IsSoundReady(clickSound)) {
+        TraceLog(LOG_WARNING, "No se pudo cargar click_space.wav");
+    }
+    if (!IsSoundReady(beepSound)) {
+        TraceLog(LOG_WARNING, "No se pudo cargar beep_space.wav");
+    }
+    if (!IsSoundReady(successSound)) {
+        TraceLog(LOG_WARNING, "No se pudo cargar success_space.wav");
+    }
+    if (!IsSoundReady(errorSound)) {
+        TraceLog(LOG_WARNING, "No se pudo cargar error_space.wav");
+    }
+    
+    // Cargar música de fondo con ruta relativa
+    backgroundMusic = LoadMusicStream("assets/music/space_ambient.mp3");
+    
+    // Configurar música
+    if (IsMusicReady(backgroundMusic)) {
+        SetMusicVolume(backgroundMusic, 0.3f);
+        PlayMusicStream(backgroundMusic);
+        musicaReproduciendo = true;
+        TraceLog(LOG_INFO, "Musica de fondo cargada correctamente");
+    } else {
+        musicaReproduciendo = false;
+        TraceLog(LOG_WARNING, "No se pudo cargar la musica de fondo");
+    }
+}
