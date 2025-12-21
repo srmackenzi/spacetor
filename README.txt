@@ -1,4 +1,4 @@
-21/12/2025. mackenziedev. Ibrahim D. Butter Saez
+21/12/2025. mackenziedev. Ibrahim David B. Saez
 # CALCULADORA VISUAL CON ANIMACIONES, TEMAS, HOVERS, COLORES, RAYLIB, SONIDOS
 # REALIZADA DE MANERA ACADEMICA EN EL PROCESO DE APRENDIZAJE DE C++
 #-----------------------------------------
