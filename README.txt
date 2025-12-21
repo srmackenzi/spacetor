@@ -14,7 +14,7 @@ TAN TEDIOSO DE REALIZAR Y SE VUELVE INTERESANTE. M.D.V.
 	INFORMACION DEL USUARIO QUE LA UTILIZO: HORA, USUARIO, OPERACIONES
 #     ---------------------------------------------------------------------
 #  CUALQUIER MODIFICACION, CONSEJO, FEEDBACK SERA BIEN RECIBIDO MUCHAS GRACIAS POR USARLA
-#  NOTA: MOYA es mi profesor de programacion I
+
       ---------------------------------------------------------------------
 
 
